@@ -1,3 +1,5 @@
 *.o
 lexer.c
 lexer.h
+/old/
+/flan
