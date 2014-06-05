@@ -1,0 +1,32 @@
+-- Compute all combinations of a list (thought of as a set) of the
+-- given length.
+
+append :: [[Num]] -> [[Num]] -> [[Num]]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end
+;
+
+mapcons :: Num -> [[Num]] -> [[Num]]
+mapcons n xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> (n:x) : mapcons n xs
+  end
+;
+
+combinations :: Num -> [Num] -> [[Num]]
+combinations n set =
+  if n <= 0
+    then [[]]
+    else match set with
+             []   -> []
+           | x:xs -> append (mapcons x (combinations (n - 1) xs))
+                            (combinations n xs)
+         end
+  end
+;
+
+main = combinations 2 [0,1,2,3,4,5,6,7,8,9]

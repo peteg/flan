@@ -1,0 +1,12 @@
+-- Cantor "dust", an infinite picture.
+-- Requires lazy evaluation.
+
+line :: Picture
+line = Canvas 10 5 [ Line (0, 3) (10, 3) ]
+;
+
+cantor :: Picture
+cantor = Above 1 50 line (Beside 1 2 cantor (Beside 1 1 Empty cantor))
+;
+
+main = cantor

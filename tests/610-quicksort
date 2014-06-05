@@ -1,0 +1,37 @@
+-- Quicksort.
+
+append :: [Num] -> [Num] -> [Num]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end
+;
+
+partition :: Num -> [Num] -> ([Num], [Num])
+partition x yys =
+  match yys with
+      []   -> ([], [])
+    | y:ys ->
+        match partition x ys with
+	  (les, gs) ->
+            match x < y with
+ 	        False -> (y:les, gs)
+              |	True  -> (les, y:gs)
+            end
+        end
+  end
+;
+
+qsort :: [Num] -> [Num]
+qsort xxs =
+  match xxs with
+      []   -> []
+    | x:xs ->
+        match partition x xs with
+          (les, gs) -> append (qsort les) (append (x:[]) (qsort gs))
+        end
+  end
+;
+
+main = qsort [4, 7, 12321, 0, 2213, 12, 57, 43, 121, 4, 765, 32341, 54, 21]

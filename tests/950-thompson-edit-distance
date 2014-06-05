@@ -1,0 +1,90 @@
+-- Compute the edit distance between two strings.
+-- From Simon Thompson's Haskell textbook, p265.
+
+data Edit
+     = Change Char -- Change the current character (overwrite the old with the new).
+     | Copy        -- Copy the current character ("right arrow").
+     | Delete      -- Delete the current character.
+     | Insert Char -- Insert a character.
+     | Kill        -- Delete to the end of the string.
+
+-- Standard list operations.
+
+filter :: (Edit -> Bool) -> [Edit] -> [Edit]
+filter p xxs =
+  match xxs with
+      []   -> []
+    | x:xs ->
+       if p x
+         then x : filter p xs
+	 else filter p xs
+       end
+  end
+;
+
+length :: [Edit] -> Num
+length xxs = match xxs with [] -> 0 | x:xs -> length xs + 1 end
+;
+
+map :: (Char -> Edit) -> [Char] -> [Edit]
+map f xxs = match xxs with
+                []   -> []
+              | x:xs -> f x : map f xs
+            end
+;
+
+-- Transform xxs into yys using the edit operations.
+transform :: [Char] -> [Char] -> [Edit]
+transform xxs yys =
+  match xxs with
+         -- Empty string goes to the empty string.
+         -- Empty string goes to anything non-empty by insertion.
+      [] -> map Insert yys
+    | x:xs ->
+         match yys with
+             -- Anything goes to the empty string by kill.
+             []   -> [Kill]
+	   | y:ys ->
+               if x == y
+                 then -- Copy equal characters over.
+	              Copy : transform xs ys
+                 else -- Otherwise choose the best sequence amongst all possibilities.
+                      best [ Delete   : transform xs  yys
+                           , Insert y : transform xxs ys
+                           , Change y : transform xs  ys
+                           ]
+               end
+	 end
+  end
+;
+
+-- The "best" sequence is the one with the lowest cost.
+best :: [[Edit]] -> [Edit]
+best ees =
+  match ees with
+      e:es ->
+        match es with
+	    []    -> e
+	  | dummy ->
+	      let b :: [Edit]
+                  b = best es ;
+	       in if cost e <= cost b
+                    then e
+                    else b
+	          end
+        end
+  end
+;
+
+-- Compute the cost of an edit sequence: 1 for each non-copy operation.
+cost :: [Edit] -> Num
+cost es =
+  let notCopy :: Edit -> Bool
+      notCopy e = match e with Copy -> False | y -> True end ;
+   in length (filter notCopy es)
+;
+
+main = transform ['F','A','I','L'] ['P','A','S','S']
+-- main = transform ['F'] ['P']
+-- main = (cost [Change 'P'], cost [Delete, Insert 'P'])
+-- main = (best [[Insert 'P', Delete], [Copy, Copy, Copy, Change 'P', Copy]])

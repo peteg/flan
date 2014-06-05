@@ -1,0 +1,73 @@
+union :: [Shape] -> [Shape] -> [Shape]
+union l r = match l with
+	[] -> r | s:ss -> s : union ss r end;
+
+polygon :: [(Num,Num)] -> [Shape]
+polygon points = match points with
+	  [] -> []
+	| p:ps -> let
+		polygonP :: (Num,Num) -> [(Num,Num)] -> [Shape]
+		polygonP prev points = match points with
+				  [] -> [Line prev p] -- yay closures
+				| p:ps -> Line prev p : polygonP p ps
+			end;
+		in polygonP p ps
+end;
+
+polyline :: [(Num,Num)] -> [Shape]
+polyline points = match points with
+	  [] -> []
+	| p:ps -> let
+		polylineP :: (Num,Num) -> [(Num,Num)] -> [Shape]
+		polylineP prev points = match points with
+				  [] -> []
+				| p:ps -> Line prev p : polylineP p ps
+			end;
+		in polylineP p ps
+end;
+
+row :: (Num -> Num -> Picture -> Picture -> Picture) -> [Picture] -> Picture
+row f pps =
+	let mkP :: [Picture] -> (Picture, Num)
+	    mkP pps = match pps with
+	    	  [] -> (Empty, 0)
+	    	| p:ps -> match mkP ps with (rest,n) -> (f 1 n p rest, n+1) end
+	     end;
+	in match mkP pps with (p,n) -> p end;
+
+beside :: Num -> Num -> Picture -> Picture -> Picture
+beside n m p1 p2 = Beside n m p1 p2;
+above :: Num -> Num -> Picture -> Picture -> Picture
+above n m p1 p2 = Above n m p1 p2;
+
+roof :: Picture
+roof = Canvas 100 100 (polygon [(0,0),(100,0),(50,100)]);
+
+walls :: Picture
+walls = Canvas 100 100 (polyline [(10,100),(10,0),(90,0),(90,100)]);
+
+window :: Picture
+window = Canvas 1 1 (union
+	(polygon [(0,0),(1,0),(1,1),(0,1)])
+	[Line (0,1/2) (1,1/2), Line (1/2,0) (1/2,1)]
+);
+
+windowPlace :: Picture
+windowPlace = row Above [Empty, window, Empty];
+
+door :: Picture
+door = Canvas 100 100 (union
+	(polyline [(20,0),(20,60),(80,60),(80,0)])
+	[Circle (70,30) 5]
+);
+
+furniture :: Picture
+furniture = row Beside [Empty, windowPlace, door, windowPlace, Empty];
+
+building :: Picture
+building = (Overlay furniture walls);
+
+house :: Picture
+house = Above 1 4 roof building;
+
+main = house

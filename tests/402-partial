@@ -1,0 +1,7 @@
+f :: (Num -> Char) -> (Num -> Char)
+f x = x
+;
+g :: Num -> Char
+g x = 'a'
+;
+main = f g 42

@@ -1,0 +1,9 @@
+append :: [Num] -> [Num] -> [Num]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end
+;
+
+main = append [1, 2, 3] [4, 5, 6]

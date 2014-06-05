@@ -1,0 +1,44 @@
+-- Run-length-encode a string.
+
+head :: [Char] -> Char
+head xxs = match xxs with x:xs -> x end
+;
+
+length :: [Char] -> Num
+length xxs = match xxs with [] -> 0 | x : xs -> length xs + 1 end
+;
+
+mapLengthHead :: [[Char]] -> [(Char, Num)]
+mapLengthHead xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> (head x, length x) : mapLengthHead xs
+  end
+;
+
+span :: Char -> [Char] -> ([Char], [Char])
+span n xxs =
+  match xxs with
+      []   -> ([], [])
+    | x:xs -> if x == n
+                then match span n xs with (ys, zs) -> (x:ys, zs) end
+		else ([], xxs)
+	      end
+  end
+;
+
+group :: [Char] -> [[Char]]
+group xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> match span x xs with
+                (ys, zs) -> (x:ys) : group zs
+              end
+  end
+;
+
+encode :: [Char] -> [(Char, Num)]
+encode xs = mapLengthHead (group xs)
+;
+
+main = encode ['a','a','a','a','b','c','c','a','a','d','e','e','e','e']

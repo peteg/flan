@@ -1,0 +1,81 @@
+-- Rule 184
+-- http://en.wikipedia.org/wiki/Rule_184
+-- Each generation is printed on a separate line.
+
+inactive :: Char
+inactive = ' '
+;
+active :: Char
+active = '#'
+;
+
+-- Make unlines first-order.
+app :: [Char] -> [Char] -> [Char]
+app xxs ys = match xxs with [] -> '\n':ys | x:xs -> x : app xs ys end ;
+
+loop :: [[Char]] -> [Char]
+loop lls = match lls with [] -> [] | l:ls -> app l (loop ls) end ;
+
+unlines :: [[Char]] -> [Char]
+unlines lines = loop lines
+;
+
+-- Initially we have a random configuration.
+
+initial :: [Char]
+initial = [ active, active, active, active, active, active, inactive, active, active, inactive
+          , inactive, inactive, active, active, active, active, inactive, active, inactive
+          , active, active, active, active, active, active, active, active, inactive, active
+          , inactive, active, active, active, inactive, inactive, inactive, active, inactive
+          , active, active, inactive, inactive, active, inactive, active, active, inactive, inactive
+          , inactive, active, inactive, active, active, active, active, inactive, inactive
+          , inactive, inactive, active, inactive, inactive, inactive, active, inactive, active
+          , inactive, active, inactive, active, inactive, active, inactive, inactive, inactive
+          , active, inactive, active, active, active, inactive, inactive, active, active
+          , inactive, active, inactive, active, inactive, active, active, inactive, inactive
+          , active, active, inactive, inactive, active, inactive, active, active, inactive, inactive
+          ]
+;
+
+-- The rule:
+-- current pattern		111 	110 	101 	100 	011 	010 	001 	000
+-- new state for center cell 	1 	0 	1 	1 	1 	0 	0 	0
+-- "f a cell has state 0, its new state is taken from the cell to its
+-- left. Otherwise, its new state is taken from the cell to its
+-- right."
+
+rule :: [Char] -> Char
+rule xyzrest =
+  match xyzrest with
+      x:yzrest ->
+        match yzrest with
+            [] -> inactive
+          | y:zrest ->
+              match zrest with
+                  [] -> inactive
+                | z:rest ->
+                    if y == inactive then x else z end
+              end
+        end
+  end
+;
+
+-- Create a new generation from an older one.
+step :: Char -> [Char] -> [Char]
+step prev xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> rule (prev:xxs) : step x xs
+  end
+;
+
+-- Create /n/ generations.
+
+auto_aux :: Num -> [Char] -> [[Char]]
+auto_aux n g = if n == 0 then [] else g : auto_aux (n - 1) (step inactive g) end
+;
+auto :: Num -> [[Char]]
+auto n = auto_aux n initial
+;
+
+main = unlines (auto 100)

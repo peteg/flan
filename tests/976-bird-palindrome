@@ -1,0 +1,39 @@
+-- Richard Bird: "Using Circular Programs to Eliminate Multiple Traversals of Data".
+-- Acta Informatica 21 (1984).
+
+-- Is a list a palindrome?
+-- Requires laziness.
+
+fst :: (Bool, [Char]) -> Bool
+fst tn = match tn with (t, n) -> t end
+;
+snd :: (Bool, [Char]) -> [Char]
+snd tn = match tn with (t, n) -> n end
+;
+hd :: [Char] -> Char
+hd xxs = match xxs with x:xs -> x end
+;
+tl :: [Char] -> [Char]
+tl xxs = match xxs with x:xs -> xs end
+;
+
+-- This is a bit subtle: need to simulate Haskell's ~ pattern lazifier.
+eqrev :: [Char] -> [Char] -> [Char] -> (Bool, [Char])
+eqrev xxs yys acc =
+  match xxs with
+      []   -> (True, acc)
+    | x:xs ->
+        let tr :: (Bool, [Char])
+            tr = eqrev xs (tl yys) (x:acc) ;
+        in (x == (hd yys) && fst tr, snd tr)
+  end
+;
+
+palindrome :: [Char] -> Bool
+palindrome x =
+  let p :: (Bool, [Char])
+      p = eqrev x (snd p) [] ;
+  in fst p
+;
+
+main = palindrome ['a','b','l','e',' ','w','a','s',' ','i',' ','e','r','e',' ','i',' ','s','a','w',' ','e','l','b','a']

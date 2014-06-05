@@ -1,0 +1,4 @@
+sum :: [Num] -> Num
+sum xxs = match xxs with [] -> 0 | x : xs -> x + sum xs end
+;
+main = sum [1,2,3]

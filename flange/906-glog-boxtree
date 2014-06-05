@@ -1,0 +1,19 @@
+-- The recursive-box picture from the GLog paper.
+b :: Picture
+b = Canvas 1 1 [ Line (2/5, 0) (2/5, 9/10)
+               , Line (2/5, 9/10) (3/5,9/10)
+               , Line (3/5,9/10) (3/5, 0)
+               , Line (3/5, 0) (2/5, 0)
+               , Line (1/2, 9/10) (1/2, 1)
+               ]
+;
+h :: Picture
+h = Overlay b (Beside 1 1 (Flip s) s)
+;
+s :: Picture
+s = Beside 1 4 Empty (Rotate h)
+;
+htree :: Picture
+htree = h
+;
+main = htree

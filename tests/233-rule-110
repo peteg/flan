@@ -1,0 +1,87 @@
+-- Rule 110
+-- http://en.wikipedia.org/wiki/Rule_110
+-- This one is Turing complete!
+-- Each generation is printed on a separate line.
+
+inactive :: Char
+inactive = ' '
+;
+active :: Char
+active = '#'
+;
+
+append :: [Char] -> [Char] -> [Char]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end
+;
+replicate :: Num -> Char -> [Char]
+replicate n c = if n == 0 then [] else c : replicate (n - 1) c end
+;
+
+-- Make unlines first-order.
+app :: [Char] -> [Char] -> [Char]
+app xxs ys = match xxs with [] -> '\n':ys | x:xs -> x : app xs ys end ;
+
+loop :: [[Char]] -> [Char]
+loop lls = match lls with [] -> [] | l:ls -> app l (loop ls) end ;
+
+unlines :: [[Char]] -> [Char]
+unlines lines = loop lines
+;
+
+-- Initially we have just one cell active, in the centre.
+
+blanks :: [Char]
+blanks = replicate 39 inactive
+;
+initial :: [Char]
+initial = append blanks (active : blanks)
+;
+
+-- The rule:
+-- current pattern 		111	110	101	100	011	010	001	000
+-- new state for center cell 	0	1	1	0	1	1	1	0
+
+rule :: [Char] -> Char
+rule xyzrest =
+  match xyzrest with
+      x:yzrest ->
+        match yzrest with
+            [] -> inactive
+          | y:zrest ->
+              match zrest with
+                  [] -> inactive
+                | z:rest ->
+                    if    (x == active && y == active && z == active)
+                       || (x == active && y == inactive && z == inactive)
+                       || (x == inactive && y == inactive && z == inactive)
+                      then inactive
+                      else active
+                    end
+              end
+        end
+  end
+;
+
+-- Create a new generation from an older one.
+step :: Char -> [Char] -> [Char]
+step prev xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> rule (prev:xxs) : step x xs
+  end
+;
+
+-- Create /n/ generations.
+
+auto_aux :: Num -> [Char] -> [[Char]]
+auto_aux n g = if n == 0 then [] else g : auto_aux (n - 1) (step inactive g) end
+;
+auto :: Num -> [[Char]]
+auto n = auto_aux n initial
+;
+
+main = unlines (auto 100)

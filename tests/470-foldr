@@ -1,0 +1,30 @@
+-- Reduction of a list to a value using foldr.
+-- Slightly grotty...
+
+foldr :: (Num -> Num -> Num) -> Num -> [Num] -> Num
+foldr f z xxs =
+  match xxs with
+      []   -> z
+    | x:xs -> f x (foldr f z xs)
+  end
+;
+
+add :: Num -> Num -> Num
+add x y = x + y
+;
+
+sum :: [Num] -> Num
+sum xs = foldr add 0 xs
+;
+
+mul :: Num -> Num -> Num
+mul x y = x * y
+;
+
+product :: [Num] -> Num
+product xs = foldr mul 1 xs
+;
+
+main = let xs :: [Num]
+           xs = [1, 2, 3, 4];
+       in (sum xs, product xs)

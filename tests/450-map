@@ -1,0 +1,14 @@
+-- The classic list-map function.
+
+map :: (Num -> Bool) -> [Num] -> [Bool]
+map f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : map f xs
+  end
+;
+
+main =
+  let l5 :: Num -> Bool
+      l5 x = x < 5 ;
+  in  map l5 [1,2,3,4,5,6,7,8,9]

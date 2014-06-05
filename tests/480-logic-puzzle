@@ -1,0 +1,109 @@
+-- Logic puzzle from Abelson/Sussman, "Structure and Interpretation of Computer Programs".
+
+----------------------------------------
+
+-- Lists boilerplate.
+
+append :: [Num] -> [Num] -> [Num]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end
+;
+append2 :: [[Num]] -> [[Num]] -> [[Num]]
+append2 xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append2 xs ys)
+  end
+;
+
+distinct :: [Num] -> Bool
+distinct xxs =
+  match xxs with
+      []   -> True
+    | x:xs -> ! (elem x xs) && distinct xs
+  end
+;
+
+elem :: Num -> [Num] -> Bool
+elem x yys = match yys with [] -> False | y:ys -> if x == y then True else elem x ys end end
+;
+
+filter :: ([Num] -> Bool) -> [[Num]] -> [[Num]]
+filter p xxs =
+  match xxs with
+      []   -> []
+    | x:xs ->
+       match p x with
+           False -> filter p xs
+	 | True  -> x : filter p xs
+       end
+  end
+;
+
+insert :: Num -> [Num] -> [Num] -> [[Num]]
+insert n acc xxs =
+  match xxs with
+      []   -> [append acc [n]]
+    | x:xs -> (append acc (n : xxs)) : (insert n (append acc [x]) xs)
+  end
+;
+
+insertInAllLists :: Num -> [[Num]] -> [[Num]]
+insertInAllLists n xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> append2 (insert n [] x) (insertInAllLists n xs)
+  end
+;
+
+permutations :: [Num] -> [[Num]]
+permutations set =
+  match set with
+      []   -> [[]]
+    | x:xs -> insertInAllLists x (permutations xs)
+  end
+;
+
+range :: Num -> Num -> [Num]
+range m n = if m <= n then m : range (m + 1) n else [] end
+;
+
+----------------------------------------
+
+-- The following puzzle (taken from Dinesman 1968) is typical of a large class of simple logic puzzles: 
+--
+--   Baker, Cooper, Fletcher, Miller, and Smith live on different floors
+--   of an apartment house that contains only five floors. Baker does not
+--   live on the top floor. Cooper does not live on the bottom
+--   floor. Fletcher does not live on either the top or the bottom
+--   floor. Miller lives on a higher floor than does Cooper. Smith does
+--   not live on a floor adjacent to Fletcher's.  Fletcher does not live
+--   on a floor adjacent to Cooper's. Where does everyone live?
+
+-- This is a fairly boring generate-and-test solution.
+
+p :: [Num] -> Bool
+p bcfmsL =
+  match bcfmsL with b:cfmsL -> match cfmsL with c:fmsL -> match fmsL with f:msL ->
+  match msL with m:sL -> match sL with s:l ->
+     -- Blokes are on different floors.
+     (distinct [b, c, f, m, s])
+     -- Baker does not live on the top floor.
+  && b != 5
+     -- Cooper does not live on the bottom floor.
+  && c != 1
+     -- Fletcher does not live on either the top nor the bottom floor.
+  && (f != 1 && f != 5)
+     -- Miller lives on a higher floor than does Cooper.
+  && m > c
+     -- Smith does not live on a floor adjacent to Fletcher's.
+  && (s != f + 1 && s != f - 1)
+     -- Fletcher does not live on a floor adjacent to Cooper's.
+  && (f != c + 1 && f != c - 1)
+  end end end end end
+;
+
+main = filter p (permutations (range 1 5))

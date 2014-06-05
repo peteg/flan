@@ -1,0 +1,42 @@
+-- Compute all permutations of a list. Not very efficient.
+
+append :: [Num] -> [Num] -> [Num]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end
+;
+append2 :: [[Num]] -> [[Num]] -> [[Num]]
+append2 xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append2 xs ys)
+  end
+;
+
+insert :: Num -> [Num] -> [Num] -> [[Num]]
+insert n acc xxs =
+  match xxs with
+      []   -> [append acc [n]]
+    | x:xs -> (append acc (n : xxs)) : (insert n (append acc [x]) xs)
+  end
+;
+
+insertInAllLists :: Num -> [[Num]] -> [[Num]]
+insertInAllLists n xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> append2 (insert n [] x) (insertInAllLists n xs)
+  end
+;
+
+permutations :: [Num] -> [[Num]]
+permutations set =
+  match set with
+      []   -> [[]]
+    | x:xs -> insertInAllLists x (permutations xs)
+  end
+;
+
+main = permutations [0,1,2,3]

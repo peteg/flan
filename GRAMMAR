@@ -1,0 +1,111 @@
+-- Grammar. Possibly inaccurate/obsolete: consult the parser.
+
+-- Comments, handled by the lexer:
+--  "--" to line's end
+-- "{-" characters "-}", no nesting.
+
+Program          = TypeDefs Bindings Main
+
+-- Algebraic Data Type definitions.
+
+TypeDefs         = TypeDef TypeDefs | EMPTY
+TypeDef          = "data" Identifier = TypeDesc
+TypeDesc         = DataConstructor TypeDesc'
+TypeDesc'        = "|" DataConstructor TypeDesc' | EMPTY
+
+DataConstructor  = Identifier Types
+
+Types            = Type Types | EMPTY
+TypeList         = Type TypeList'
+TypeList'        = "," Type TypeList' | EMPTY
+
+-- '->' is right associative: want a->b->c to be parsed as a -> (b -> c).
+Type             = AtomicType FnType
+FnType           = "->" Type | EMPTY
+AtomicType       = "Bool" | "Char" | "Num"
+                 | Identifier -- User defined type.
+      	  	 | "[" Type "]"
+      	  	 | "(" TypeList ")" -- Identify a parenthesised single type with that type.
+
+Bindings         = Binding Bindings | EMPTY
+Binding          = Variable "::" Type
+		   Variable Variables = Expression ";"
+
+Variable         = lower-case letter followed by alphanumerics and "_"
+Variables        = Variable Variables | EMPTY
+
+Main             = "main" "=" Expression
+
+ExpressionList   = Expression ExpressionList'
+ExpressionList'  = "," ExpressionList | EMPTY
+
+-- Nested match and i-t-e are ambiguous without 'end'.
+Expression       = ConsExpr
+  LET:           | "let" Bindings "in" Expression
+  ITE:           | "if" Expression "then" Expression "else" Expression "end"
+  MATCH:         | "match" Expression "with" Clauses "end"
+
+Clauses          = Clause Clauses'
+Clauses'         = "|" Clause Clauses' | EMPTY
+
+Clause           = Pattern "->" Expression
+
+-- Subtlety: identify the pattern "(x)" with "x".
+Pattern          = Constant | Identifier Variables | "(" VariableList ")" | Variable ConsPattern
+ConsOrList       = ":" Variable | EMPTY
+
+VariableList     = Variable VariableList'
+VariableList'    = "," Variable VariableList' | EMPTY
+
+-- ':' is right associative.
+ConsExpr     = OrExpr ConsExpr'
+ConsExpr'    = ":" ConsExpr | EMPTY
+
+OrExpr       = AndExpr OrExpr'
+OrExpr'      = "||" AndExpr OrExpr' | EMPTY
+
+AndExpr      = EqExpr AndExpr'
+AndExpr'     = "&&" EqExpr AndExpr' | EMPTY
+
+EqExpr       = RelExpr EqExpr'
+EqExpr'      = EqOp RelExpr EqExpr' | EMPTY
+EqOp         = "==" | "!="
+
+RelExpr      = AddExpr RelExpr'
+RelExpr'     = RelOp AddExpr RelExpr' | EMPTY
+RelOp        = "<" | "<=" | ">" | ">="
+
+AddExpr      = MulExpr AddExpr'
+AddExpr'     = AddOp MulExpr AddExpr' | EMPTY
+AddOp        = "+" | "-"
+
+MulExpr      = UnaryExpr MulExpr'
+MulExpr'     = MulOp UnaryExpr MulExpr' | EMPTY
+MulOp        = "*" | "/" | "%"
+
+UnaryExpr    = SimpleExpr | UnaryOp SimpleExpr
+UnaryOp      = "!"
+
+SimpleExpr   = AtomicExpr0 | AtomicExpr1 Arguments
+Arguments    = AtomicExpr Arguments | EMPTY
+
+AtomicExpr   = AtomicExpr0 | AtomicExpr1
+
+AtomicExpr0  =
+  CONST:       Constant
+  LIST:      | "[" ExpressionList "]"
+
+-- Subtlety: identify the expression "(x)" with "x".
+AtomicExpr1  =
+  DATACONS:  | Identifier
+  TUPLES:    | "(" ExpressionList ")"
+  VAR:       | Variable
+
+Char             = characters, whatever, escape codes too
+Identifier       = upper-case letter followed by alphanumerics and "_"
+Num              = string of numerals, '0' .. '9', optionally "." and more numerals
+String           = double quote Chars double quote -- Lists of characters
+Constant         = "[]"
+	 	 | "True" | "False"
+ 		 | "'" Char "'"
+		 | Num

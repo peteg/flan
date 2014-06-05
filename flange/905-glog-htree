@@ -1,0 +1,14 @@
+-- The recursive-H picture from the GLog paper.
+l :: Picture
+l = Canvas 1 1 [Line (0.5, 0.5) (0.5, 1)]
+;
+h :: Picture
+h = Overlay l (Beside 1 1 (Flip s) s)
+;
+s :: Picture
+s = Rotate h
+;
+htree :: Picture
+htree = h
+;
+main = htree

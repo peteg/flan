@@ -1,0 +1,7 @@
+-- Lazy infinite sequence of ones.
+
+ones :: [Num]
+ones = 1 : ones
+;
+
+main = ones

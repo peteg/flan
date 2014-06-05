@@ -1,0 +1,63 @@
+-- Are the frontiers of two trees equal?
+-- Example from Darlington/Burstall's classic program transformation paper.
+
+data Tree = Node Tree Tree | Tip Char
+
+-- List boilerplate.
+
+append :: [Char] -> [Char] -> [Char]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end
+;
+
+-- The frontier of the tree is all the 'Tip's. This is not very efficient.
+frontier :: Tree -> [Char]
+frontier t = match t with Tip c -> [c] | Node l r -> append (frontier l) (frontier r) end
+;
+
+-- Efficient version, using lists of trees.
+-- Seems to be a lot of redundant pattern matching here; could imagine
+-- a hand-crafted state machine doing a better job.
+eqtreelist :: [Tree] -> [Tree] -> Bool
+eqtreelist xxs yys =
+  match xxs with
+      []   -> match yys with [] -> True  | y:ys -> False end
+    | x:xs ->
+        match yys with
+            []   -> False
+          | y:ys -> match x with
+                        Tip xc   -> match y with
+                                        Tip yc   -> xc == yc && eqtreelist xs ys
+                                      | Node l r -> eqtreelist xxs (l : r : ys)
+                                    end
+                      | Node l r -> eqtreelist (l : r : xs) yys
+                    end
+        end
+  end
+;
+
+-- Sample trees.
+
+t1 :: Tree
+t1 = Node (Node (Tip 'A') (Tip 'B')) (Node (Tip 'C') (Node (Tip 'D') (Node (Tip 'E') (Tip 'F'))))
+;
+t2 :: Tree
+t2 = Node (Tip 'A') (Node (Node (Tip 'B') (Tip 'C')) (Node (Node (Tip 'D') (Tip 'E')) (Tip 'F')))
+;
+t3 :: Tree
+t3 = Node (Node (Node (Tip 'G') (Tip 'B')) (Tip 'C')) (Node (Tip 'D') (Node (Tip 'E') (Tip 'F')))
+;
+
+-- 'eqlist' is built-in
+test1 :: (Bool, Bool)
+test1 = (frontier t1 == frontier t2, frontier t1 == frontier t3)
+;
+
+test2 :: (Bool, Bool)
+test2 = (eqtreelist [t1] [t2], eqtreelist [t1] [t3])
+;
+
+main = test1 == test2

@@ -1,0 +1,9 @@
+f :: (Char -> Bool) -> Bool
+f p = p 'c'
+;
+
+p :: Char -> Bool
+p x = x == 'a'
+;
+
+main = f p

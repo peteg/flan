@@ -1,0 +1,18 @@
+-- Merge two sorted lists into a sorted list.
+merge :: [Num] -> [Num] -> [Num]
+merge xxs yys =
+  match xxs with
+      []     -> yys
+    | x : xs ->
+        match yys with
+            []     -> xxs
+          | y : ys ->
+	      match x < y with
+	          False -> y : merge xxs ys
+	        | True  -> x : merge xs yys
+              end
+        end
+  end
+;
+
+main = merge [1,3,5] [2, 4]

@@ -1,0 +1,29 @@
+-- Simple binary search trees.
+
+data Tree = Node Num Tree Tree | Leaf
+
+data MaybeNum = Nothing | Just Num
+
+insert :: Num -> Tree -> Tree
+insert x t =
+  match t with
+      Leaf       -> Node x Leaf Leaf
+    | Node y l r -> if x < y
+                      then Node y (insert x l) r
+                      else Node y l (insert x r)
+                    end
+  end
+;
+
+lookup :: Num -> Tree -> MaybeNum
+lookup x t =
+  match t with
+      Leaf       -> Nothing
+    | Node y l r -> if x < y
+                      then lookup x l
+                      else lookup x r
+                    end
+  end
+;
+
+main = lookup 15 (insert 1 (insert 2 (insert 3 (insert 4 (insert 5 (insert 6 Leaf))))))

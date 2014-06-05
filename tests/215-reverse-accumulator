@@ -1,0 +1,15 @@
+-- Accumulator reverse.
+
+reverse_acc :: [Num] -> [Num] -> [Num]
+reverse_acc xxs acc =
+  match xxs with
+      []   -> acc
+    | x:xs -> reverse_acc xs (x:acc)
+  end
+;
+
+reverse :: [Num] -> [Num]
+reverse xs = reverse_acc xs []
+;
+
+main = reverse [1,2,3,4]

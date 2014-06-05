@@ -1,0 +1,57 @@
+-- Generate a list where each positive rational appears uniquely.
+-- http://en.literateprograms.org/Generating_all_rationals_%28Haskell%29
+
+-- Encode a rational as a pair.
+-- Clearly requires laziness as the list is infinite.
+
+map :: (Num -> Num) -> [Num] -> [Num]
+map f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : map f xs
+  end
+;
+foldr :: (Num -> [(Num, Num)] -> [(Num, Num)]) -> [(Num, Num)] -> [Num] -> [(Num, Num)]
+foldr f z xxs =
+  match xxs with
+      []   -> z
+    | x:xs -> f x (foldr f z xs)
+  end
+;
+
+-- Euclid's algorithm.
+gcd :: Num -> Num -> Num
+gcd x y = if y == 0 then x else gcd y (x % y) end
+;
+
+succ :: Num -> Num
+succ x = x + 1
+;
+
+-- Infinite sequence of naturals starting from 0.
+nats :: [Num]
+nats = 0 : map succ nats
+;
+
+-- Finite sequence of naturals from 0 up to n - 1.
+upTo :: Num -> [Num]
+upTo n =
+  let l :: Num -> [Num]
+      l m = if m < n then m : l (m + 1) else [] end ;
+  in l 0
+;
+
+rationals :: [(Num, Num)]
+rationals =
+  let mkR :: Num -> [(Num, Num)] -> [(Num, Num)]
+      mkR n rats = foldr (chkR n) rats (upTo (n - 1)) ;
+
+      chkR :: Num -> Num -> [(Num, Num)] -> [(Num, Num)]
+      chkR n m rats = if gcd (m + 1) (n - m) == 1
+                        then (m + 1, n - m) : rats
+                        else rats
+                      end ;
+  in (0, 1) : foldr mkR [] nats
+;
+
+main = rationals

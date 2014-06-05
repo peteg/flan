@@ -1,0 +1,13 @@
+-- 'x' is not in scope.
+f :: Num -> Num
+f = let x :: Num
+        x = 2 ;
+        g :: Num -> Num
+        g y = x + y ;
+     in g
+;
+
+main =
+ let x :: Num
+     x = 3 ;
+  in f 2

@@ -1,0 +1,5 @@
+f :: (Num, Num) -> Num
+f xy = match xy with (x, y, z) -> z end
+;
+
+main = (1, 2) == (1, 2, 3)

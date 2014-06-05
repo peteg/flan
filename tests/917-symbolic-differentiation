@@ -1,0 +1,133 @@
+-- Symbolic differentiation and simplication.  For simplicity we
+-- differentiate with respect to a single variable and only consider a
+-- few types of expressions.
+
+-- Based on the classic Prolog program.
+
+data Expr = Const Num
+          | Var Num
+          | Add Expr Expr
+          | Sub Expr Expr
+          | Div Expr Expr
+          | Mul Expr Expr
+          | Exp Expr Expr -- Exponentiation
+          | Log Expr      -- Natural logarithm
+
+diff :: Expr -- Differentiate this expression...
+     -> Num  -- ... with respect to this variable.
+     -> Expr
+diff e v =
+  match e with
+      Const x   -> Const 0
+    | Var v1    -> if v == v1 then Const 1 else Const 0 end
+    | Add e1 e2 -> Add (diff e1 v) (diff e2 v)
+    | Sub e1 e2 -> Add (diff e1 v) (Sub (Const 0) (diff e2 v))
+    | Div e1 e2 -> diff (Mul e1 (Exp e2 (Sub (Const 0) (Const 1)))) v
+    | Mul e1 e2 -> Add (Mul (diff e2 v) e1) (Mul (diff e1 v) e2)
+    | Exp e1 e2 -> Add (Mul (diff e2 v) (Mul (Log e1) (Exp e1 e2)))
+                       (Mul e2 (Mul (diff e1 v) (Exp e1 (Sub e2 (Const 1)))))
+    | Log e1    -> Mul (diff e1 v) (Exp e1 (Sub (Const 0) (Const 1)))
+  end
+;
+
+-- Do some simplification to make things easier to read.
+-- Not complete or anything special.
+
+simplify :: Expr -> Expr
+simplify e =
+  match e with
+      Add e1 e2 ->
+        let e1s :: Expr
+            e1s = simplify e1 ;
+            e2s :: Expr
+            e2s = simplify e2 ;
+        in match e1s with
+               Const x ->
+                 match x with
+                     0 -> e2s
+                   | a ->
+                      match e2s with
+                          Const y -> Const (x + y)
+                        | e -> Add e1s e2s
+                     end
+                end
+             | e ->
+                 match e2s with
+                     Const x ->
+                       match x with
+                           0 -> e1s
+                         | a -> Add e1s e2s
+                       end
+                   | e -> Add e1s e2s
+                 end
+           end
+    | Sub e1 e2 ->
+        let e1s :: Expr
+            e1s = simplify e1 ;
+            e2s :: Expr
+            e2s = simplify e2 ;
+        in match e2s with
+               Const x ->
+                 match x with
+                     0 -> e1s
+                   | a ->
+                      match e1s with
+                          Const y -> Const (y - x)
+                        | e -> Sub e1s e2s
+                     end
+                end
+             | e -> Sub e1s e2s
+           end
+    | Mul e1 e2 ->
+        let e1s :: Expr
+            e1s = simplify e1 ;
+            e2s :: Expr
+            e2s = simplify e2 ;
+        in match e1s with
+               Const x ->
+                 match x with
+                     0 -> Const 0
+                   | 1 -> e2s
+                   | a ->
+                      match e2s with
+                          Const y -> Const (x * y)
+                        | e -> Mul e1s e2s
+                     end
+                end
+             | e ->
+                 match e2s with
+                     Const x ->
+                       match x with
+                           0 -> Const 0
+                         | 1 -> e1s
+                         | a -> Mul e2s e1s -- Move the constant forward.
+                       end
+                   | e -> Mul e1s e2s
+                 end
+           end
+    | Exp e1 e2 ->
+        let e1s :: Expr
+            e1s = simplify e1 ;
+            e2s :: Expr
+            e2s = simplify e2 ;
+        in Exp e1s e2s
+    | e -> e
+  end
+;
+
+-- d/dx (3x^4)
+e0 :: Expr
+e0 = simplify (diff (Mul (Const 3) (Exp (Var 1) (Const 4))) 1)
+;
+
+-- d/dx (3^(2x))
+e1 :: Expr
+e1 = simplify (diff (Exp (Const 3) (Mul (Const 2) (Var 1))) 1)
+;
+
+-- d/dx (log 2x)
+e2 :: Expr
+e2 = simplify (diff (Log (Mul (Const 2) (Var 1))) 1)
+;
+
+main = [e0, e1, e2]

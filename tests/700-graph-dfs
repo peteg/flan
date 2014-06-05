@@ -1,0 +1,42 @@
+-- Paulson, "ML for the working programmer", p91.
+-- Adjacency lists, depth-first search.
+
+append :: [Char] -> [Char] -> [Char]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end
+;
+mem :: Char -> [Char] -> Bool
+mem x yys = match yys with [] -> False | y:ys -> if x == y then True else mem x ys end end
+;
+
+graph :: [(Char, Char)]
+graph = [ ('a', 'b'), ('a', 'c'), ('a', 'd'), ('b', 'e')
+        , ('c', 'f'), ('d', 'e'), ('e', 'f'), ('e', 'g') ]
+;
+
+-- The successors of the given node in the given graph.
+nexts :: Char -> [(Char, Char)] -> [Char]
+nexts n g =
+  match g with
+      []   -> []
+    | e:es ->
+        match e with (x, y) -> if n == x then y : nexts n es else nexts n es end end
+  end
+;
+
+-- Depth-first search.
+dfs :: [Char] -> [(Char, Char)] -> [Char] -> [Char]
+dfs xxs g visited =
+  match xxs with
+      []   -> visited
+    | x:xs -> if mem x visited
+                then dfs xs g visited
+                else dfs (append (nexts x g) xs) g (x:visited)
+              end
+  end
+;
+
+main = dfs ['a'] graph []

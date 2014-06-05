@@ -1,0 +1,141 @@
+-- Enumerate the strings of a regular expression in lexicographic order.
+-- M. Douglas McIlroy, Functional Pearl, JFP 14(5) 2004.
+-- http://www.cs.dartmouth.edu/~doug/pubs.html
+
+-- Requires lazy evaluation as the output list might be infinite.
+-- Monomorphise to lists of ints, specialise some functions.
+
+-- The abstract syntax of regular expressions.
+
+data Rexp = Nil               -- empty language
+          | Eps               -- empty string
+          | Sym Num           -- symbol of the alphabet
+          | Clo Rexp          -- Kleene closure
+          | Cat Rexp Rexp     -- catenation
+          | Alt Rexp Rexp     -- alternation
+
+data Ordering = LT | EQ | GT
+
+append :: [Num] -> [Num] -> [Num]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end
+;
+
+length :: [Num] -> Num
+length xxs = match xxs with [] -> 0 | x : xs -> length xs + 1 end
+;
+
+take :: Num -> [[Num]] -> [[Num]]
+take n xxs =
+  if n <= 0
+    then []
+    else match xxs with
+             []   -> []
+           | x:xs -> x : take (n - 1) xs
+         end
+  end
+;
+
+-- "Length-ordered lists".
+
+compare :: [Num] -> [Num] -> Ordering
+compare xxs yys =
+  let c :: [Num] -> [Num] -> Ordering
+      c aas bbs =
+          match aas with
+              []   -> EQ
+            | a:as -> match bbs with
+                        b:bs -> if a < b then LT else if a > b then GT else c as bs end end
+                      end
+          end ;
+      xxslen :: Num
+      xxslen = length xxs ;
+      yyslen :: Num
+      yyslen = length yys ;
+  in if xxslen < yyslen then LT else if xxslen > yyslen then GT else c xxs yys end end
+;
+
+-- The "direct" version, using lists with set-like operations.
+
+-- Merge two sorted lists into a sorted list, dropping the equal elements.
+merge :: [[Num]] -> [[Num]] -> [[Num]]
+merge xxs yys =
+  match xxs with
+      []     -> yys
+    | x : xs ->
+        match yys with
+            []     -> xxs
+          | y : ys -> match compare x y with
+                          LT -> x : merge xs yys
+                        | EQ -> x : merge xs ys
+                        | GT -> y : merge xxs ys
+                      end
+        end
+  end
+;
+
+-- The Cartesian product of two lists.
+xprod :: [[Num]] -> [[Num]] -> [[Num]]
+xprod xxs yys =
+  match xxs with
+      []     -> []
+    | x : xs ->
+        match yys with
+            []     -> []
+          | y : ys -> (append x y) : (merge (xprod [x] ys) (xprod xs yys))
+        end
+  end
+;
+
+-- The Kleene closure.
+closure :: [[Num]] -> [[Num]]
+closure xxs =
+  match xxs with
+      []   -> [[]]
+    | x:xs -> if x == [] then closure xs else [] : (xprod xxs (closure xxs)) end
+  end
+;
+
+enumR :: Rexp -> [[Num]]
+enumR r =
+  match r with
+      Nil     -> []
+    | Eps     -> [[]]
+    | Sym a   -> [[a]]
+    | Clo x   -> clo (enumR x)
+    | Cat x y -> cat (enumR x) (enumR y)
+    | Alt x y -> alt (enumR x) (enumR y)
+  end
+;
+
+alt :: [[Num]] -> [[Num]] -> [[Num]]
+alt = merge
+;
+
+clo :: [[Num]] -> [[Num]]
+clo = closure
+;
+
+cat :: [[Num]] -> [[Num]] -> [[Num]]
+cat = xprod
+;
+
+-- Tests
+
+regexp1 :: Rexp
+regexp1 = Cat (Alt (Sym 1) (Sym 2)) (Sym 3)
+;
+regexp2 :: Rexp
+regexp2 = Clo (Sym 3)
+;
+sandwich :: Rexp
+sandwich = Cat (Sym 0) (Cat (Clo (Sym 1)) (Sym 0))  -- 0 1* 0
+;
+even_0 :: Rexp
+even_0 = Clo (Alt sandwich (Sym 1))     -- (01*0|1)*
+;
+
+main = enumR even_0

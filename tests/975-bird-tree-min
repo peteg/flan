@@ -1,0 +1,38 @@
+-- Richard Bird: "Using Circular Programs to Eliminate Multiple Traversals of Data".
+-- Acta Informatica 21 (1984).
+
+-- Replace all numbers in a tree with the minimum value in the tree.
+-- Requires laziness.
+
+data Tree = Tip Num | Fork Tree Tree
+
+repmin :: Tree -> Num -> (Tree, Num)
+repmin t m =
+  match t with
+      Tip n    -> (Tip m, n)
+    | Fork l r ->
+        match repmin l m with (t1, m1) ->
+          match repmin r m with (t2, m2) -> (Fork t1 t2, if m1 < m2 then m1 else m2 end)
+        end end
+  end
+;
+
+transform :: Tree -> Tree
+transform t =
+  let p :: (Tree, Num)
+      p  = repmin t (snd p) ;
+  in fst p
+;
+
+tree :: Tree
+tree = Fork (Tip 1) (Fork (Tip 3) (Fork (Tip 0) (Tip 2)))
+;
+
+fst :: (Tree, Num) -> Tree
+fst tn = match tn with (t, n) -> t end
+;
+snd :: (Tree, Num) -> Num
+snd tn = match tn with (t, n) -> n end
+;
+
+main = transform tree

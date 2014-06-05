@@ -1,0 +1,7 @@
+data D = A | B
+
+f :: D -> Bool
+f x = match x with A -> True | B -> False end
+;
+
+main = f B

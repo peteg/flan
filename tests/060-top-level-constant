@@ -1,0 +1,13 @@
+-- This is a bit tricky: should constants be allowed to use earlier definitions?
+-- strict: well, maybe.
+-- lazy: no problem, use any definition in scope you like.
+
+f :: Num -> Num
+f x = 3 * x
+;
+
+c :: Num
+c = f 3
+;
+
+main = c + 2

@@ -1,0 +1,348 @@
+-- Bird/Wadler "Introduction to Functional Programming"
+-- p97 Drawing a calendar.
+
+-- This has some duplication as we don't have parametric
+-- polymorpism. Good illustration of how useful it is.
+
+-- Standard list functions.
+
+append :: [Char] -> [Char] -> [Char]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end
+;
+append2 :: [[Char]] -> [[Char]] -> [[Char]]
+append2 xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append2 xs ys)
+  end
+;
+
+foldr1 :: ([[Char]] -> [[Char]] -> [[Char]]) -> [[[Char]]] -> [[Char]]
+foldr1 f xyys =
+  match xyys with
+    x:yys ->
+      match yys with
+          []   -> x
+        | y:ys -> f x (foldr1 f yys)
+      end
+  end
+;
+
+head :: [[Char]] -> [Char]
+head xxs = match xxs with x : xs -> x end
+;
+
+tail :: [[[Char]]] -> [[[Char]]]
+tail xxs = match xxs with x : xs -> xs end
+;
+
+interval :: Num -> Num -> Num -> [Num]
+interval s step e = s : (if s + step > e then [] else interval (s + step) step e end)
+;
+
+length :: [Char] -> Num
+length xxs = match xxs with [] -> 0 | x : xs -> length xs + 1 end
+;
+length2 :: [[Char]] -> Num
+length2 xxs = match xxs with [] -> 0 | x : xs -> length2 xs + 1 end
+;
+length3 :: [[[Char]]] -> Num
+length3 xxs = match xxs with [] -> 0 | x : xs -> length3 xs + 1 end
+;
+
+mapNN :: (Num -> Num) -> [Num] -> [Num]
+mapNN f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : mapNN f xs
+  end
+;
+mapNS :: (Num -> [Char]) -> [Num] -> [[Char]]
+mapNS f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : mapNS f xs
+  end
+;
+mapNP :: (Num -> [[Char]]) -> [Num] -> [[[Char]]]
+mapNP f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : mapNP f xs
+  end
+;
+mapPSP :: ([[[Char]]] -> [[Char]]) -> [[[[Char]]]] -> [[[Char]]]
+mapPSP f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : mapPSP f xs
+  end
+;
+mapNPS :: (Num -> [[[Char]]]) -> [Num] -> [[[[Char]]]]
+mapNPS f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : mapNPS f xs
+  end
+;
+map4 :: (([Char], Num, Num, Num) -> [[Char]]) -> [([Char], Num, Num, Num)] -> [[[Char]]]
+map4 f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : map4 f xs
+  end
+;
+
+repeat :: Num -> Char -> [Char]
+repeat n c = if n == 0 then [] else c : repeat (n - 1) c end
+;
+repeat2 :: Num -> [Char] -> [[Char]]
+repeat2 n c = if n == 0 then [] else c : repeat2 (n - 1) c end
+;
+repeatN :: Num -> Num -> [Num]
+repeatN n c = if n == 0 then [] else c : repeatN (n - 1) c end
+;
+
+drop :: Num -> [[[Char]]] -> [[[Char]]]
+drop n ps = if n == 0 then ps else drop (n - 1) (tail ps) end
+;
+-- Haskell's scanl
+scan :: (Num -> Num -> Num) -> Num -> [Num] -> [Num]
+scan f z xxs = z : (match xxs with [] -> [] | x:xs -> scan f (f z x) xs end)
+;
+take :: Num -> [[[Char]]] -> [[[Char]]]
+take n pps =
+  if n == 0
+    then []
+    else match pps with
+             []   -> []
+           | p:ps -> p : take (n - 1) ps
+         end
+  end
+;
+
+
+takeN :: Num -> [Num] -> [Num]
+takeN n pps =
+  if n == 0
+    then []
+    else match pps with
+             []   -> []
+           | p:ps -> p : takeN (n - 1) ps
+         end
+  end
+;
+unlines :: [[Char]] -> [Char]
+unlines lines =
+  let app :: [Char] -> [Char] -> [Char]
+      app xxs ys = match xxs with [] -> '\n':ys | x:xs -> x : app xs ys end ;
+      loop :: [[Char]] -> [Char]
+      loop lls = match lls with [] -> [] | l:ls -> app l (loop ls) end ;
+  in loop lines
+;
+zipWith :: ([Char] -> [Char] -> [Char]) -> [[Char]] -> [[Char]] -> [[Char]]
+zipWith f xxs yys =
+  match xxs with
+      []   -> []
+    | x:xs ->
+        match yys with
+            []   -> []
+          | y:ys -> f x y : zipWith f xs ys
+        end
+  end
+;
+zip4 :: [[Char]] -> [Num] -> [Num] -> [Num] -> [([Char], Num, Num, Num)]
+zip4 aas bbs ccs dds =
+  match aas with [] -> [] | a:as ->
+   match bbs with [] -> [] | b:bs ->
+    match ccs with [] -> [] | c:cs ->
+     match dds with [] -> [] | d:ds -> (a,b,c,d) : zip4 as bs cs ds
+     end
+    end
+   end
+  end
+;
+
+-- Bird/Wadler p98.
+
+height :: [[Char]] -> Num
+height xs = length2 xs
+;
+
+width :: [[Char]] -> Num
+width xs = length (head xs)
+;
+
+-- Unfortunately we don't have user-defined infix operators.
+above :: [[Char]] -> [[Char]] -> [[Char]]
+above p q =
+  match width p == width q with
+    True -> append2 p q
+  end
+;
+
+beside :: [[Char]] -> [[Char]] -> [[Char]]
+beside p q =
+  match height p == height q with
+    True -> zipWith append p q
+  end
+;
+
+-- Bird/Wadler p99.
+
+stack :: [[[Char]]] -> [[Char]]
+stack xs = foldr1 above xs
+;
+
+spread :: [[[Char]]] -> [[Char]]
+spread xs = foldr1 beside xs
+;
+
+empty :: Num -> Num -> [[Char]]
+empty h w = repeat2 h (repeat w ' ')
+;
+
+block :: Num -> [[[Char]]] -> [[Char]]
+block n ps = stack (mapPSP spread (group n ps))
+;
+
+group :: Num -> [[[Char]]] -> [[[[Char]]]]
+group n ps =
+  let mkG :: Num -> [[[Char]]]
+      mkG j = take n (drop j ps) ;
+   in mapNPS mkG (interval 0 n (length3 ps - n))
+;
+
+blockT :: Num -> [[[Char]]] -> [[Char]]
+blockT n ps = spread (mapPSP stack (group n ps))
+;
+
+-- Bird/Wadler p100.
+
+lframe :: Num -> Num -> [[Char]] -> [[Char]]
+lframe m n p =
+  let h :: Num
+      h = height p;
+      w :: Num
+      w = width p;
+  in above (beside p (empty h (n - w))) (empty (m - h) n)
+;
+
+display :: [[Char]] -> [Char]
+display = unlines
+;
+
+calendar :: Num -> [Char]
+calendar year = display (block 3 (map4 picture (months year)))
+;
+
+picture :: ([Char], Num, Num, Num) -> [[Char]]
+picture t = match t with (mn, yr, fd, ml) -> above (title mn yr) (table fd ml) end
+;
+
+-- Bird/Wadler p101.
+
+title :: [Char] -> Num -> [[Char]]
+title mn yr = lframe 2 25 [append mn (' ' : showNum yr)]
+;
+table :: Num -> Num -> [[Char]]
+table fd ml = lframe 8 25 (beside daynames (entries fd ml))
+;
+daynames :: [[Char]]
+daynames = [ ['S','u','n']
+           , ['M','o','n']
+           , ['T','u','e']
+           , ['W','e','d']
+           , ['T','h','u']
+           , ['F','r','i']
+           , ['S','a','t'] ]
+;
+entries :: Num -> Num -> [[Char]]
+entries fd ml = blockT 7 (dates fd ml)
+;
+dates :: Num -> Num -> [[[Char]]]
+dates fd ml =
+  let range :: Num -> Num -> [Num]
+      range m n = if m <= n then m : range (m + 1) n else [] end ;
+  in mapNP (date ml) (range (1 - fd) (42 - fd))
+;
+date :: Num -> Num -> [[Char]]
+date ml d = if d < 1 || ml < d
+              then [rjustify 3 [' ']]
+              else [rjustify 3 (showNum d)]
+            end
+;
+rjustify :: Num -> [Char] -> [Char]
+rjustify fwidth f = append (repeat (fwidth - length f) ' ') f
+;
+
+months :: Num -> [([Char], Num, Num, Num)]
+months yr = zip4 mnames (repeatN 12 yr) (fstdays yr) (mlengths yr)
+;
+
+-- Bird/Wadler p102.
+
+mnames :: [[Char]]
+mnames = [ ['J','a','n','u','a','r','y']
+         , ['F','e','b','r','u','a','r','y']
+         , ['M','a','r','c','h']
+         , ['A','p','r','i','l']
+         , ['M','a','y']
+         , ['J','u','n','e']
+         , ['J','u','l','y']
+         , ['A','u','g','u','s','t']
+         , ['S','e','p','t','e','m','b','e','r']
+         , ['O','c','t','o','b','e','r']
+         , ['N','o','v','e','m','b','e','r']
+         , ['D','e','c','e','m','b','e','r'] ]
+;
+
+mlengths :: Num -> [Num]
+mlengths yr =
+  let feb :: Num
+      feb = if leap yr then 29 else 28 end ;
+  in [31, feb, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+;
+leap :: Num -> Bool
+leap yr = if yr % 100 == 0 then yr % 400 == 0 else yr % 4 == 0 end
+;
+jan1 :: Num -> Num
+jan1 yr = (yr + (yr - 1) / 4 - (yr - 1) / 100 + (yr - 1) / 400) % 7 -- FIXME int division
+;
+fstdays :: Num -> [Num]
+fstdays yr =
+  let add :: Num -> Num -> Num
+      add x y = x + y ;
+      mod7 :: Num -> Num
+      mod7 x = x % 7 ;
+  in takeN 12 (mapNN mod7 (scan add (jan1 yr) (mlengths yr)))
+;
+
+-- 'showNum' works OK on small positive integers, but not negatives or
+-- floating point numbers.
+showNum :: Num -> [Char]
+showNum x =
+  let
+      showDigit :: Num -> Char
+      showDigit n = match n with
+                        0 -> '0'
+                      | 1 -> '1'
+                      | 2 -> '2'
+                      | 3 -> '3'
+                      | 4 -> '4'
+                      | 5 -> '5'
+                      | 6 -> '6'
+                      | 7 -> '7'
+                      | 8 -> '8'
+                      | 9 -> '9'
+                    end ;
+      sn :: Num -> [Char]
+      sn n = if n < 1 then [] else append (sn (n / 10)) [showDigit (n % 10)] end ;
+  in if x == 0 then ['0'] else sn x end
+;
+
+main = calendar 2008

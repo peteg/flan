@@ -1,0 +1,10 @@
+-- A strict interpreter with LETREC will loop on 'allFalse'.
+
+allFalse :: [Bool]
+allFalse = False : allFalse
+;
+and :: [Bool] -> Bool
+and xxs = match xxs with x:xs -> x && and xs end
+;
+
+main = and (True : allFalse)

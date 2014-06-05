@@ -1,0 +1,103 @@
+-- Richard Bird: "Using Circular Programs to Eliminate Multiple Traversals of Data".
+-- Acta Informatica 21 (1984).
+
+-- Replace all numbers in a tree with those numbers arranged in increasing order.
+-- Requires laziness.
+
+data Tree = Tip Num | Fork Tree Tree
+
+----------------------------------------
+
+-- Mergesort.
+
+-- Deal a list into two lists of almost-equal length.
+split :: [Num] -> ([Num], [Num])
+split xyys =
+  match xyys with
+      []      -> ([], [])
+    | x : yys ->
+        match yys with
+            []     -> ([x], [])
+          | y : ys ->
+	    match split ys with (as, bs) -> (x : as, y : bs) end
+       end
+  end
+;
+
+-- Merge two sorted lists into a sorted list.
+merge :: [Num] -> [Num] -> [Num]
+merge xxs yys =
+  match xxs with
+      []     -> yys
+    | x : xs ->
+        match yys with
+            []     -> xxs
+          | y : ys ->
+	      match x < y with
+	          False -> y : merge xxs ys
+	        | True  -> x : merge xs yys
+              end
+        end
+  end
+;
+
+-- Sort a list.
+msort :: [Num] -> [Num]
+msort xxs =
+  match xxs with
+      []     -> []
+    | x : xs ->
+        match xs with
+	    []    -> [x]
+	  | dummy -> match split xxs with (as, bs) -> merge (msort as) (msort bs) end
+	end
+  end
+;
+
+----------------------------------------
+
+fst :: (Tree, [Num], [Num]) -> Tree
+fst tmn = match tmn with (t, m, n) -> t end
+;
+snd :: (Tree, [Num], [Num]) -> [Num]
+snd tmn = match tmn with (t, m, n) -> m end
+;
+trd :: (Tree, [Num], [Num]) -> [Num]
+trd tmn = match tmn with (t, m, n) -> n end
+;
+hd :: [Num] -> Num
+hd xxs = match xxs with x:xs -> x end
+;
+tl :: [Num] -> [Num]
+tl xxs = match xxs with x:xs -> xs end
+;
+
+repnd :: Tree -> [Num] -> [Num] -> (Tree, [Num], [Num])
+repnd t ms ns =
+  match t with
+      Tip n    -> (Tip (hd ms), tl ms, n : ns)
+    | Fork l r ->
+        let combine :: (Tree, [Num], [Num]) -> (Tree, [Num], [Num]) -> (Tree, [Num], [Num])
+            combine p q = (Fork (fst p) (fst q), snd q, trd p) ;
+
+            p :: (Tree, [Num], [Num])
+            p = repnd l ms (trd q) ;
+
+            q :: (Tree, [Num], [Num])
+            q = repnd r (snd p) ns ;
+        in combine p q
+  end
+;
+
+transform :: Tree -> Tree
+transform t =
+  let p :: (Tree, [Num], [Num])
+      p  = repnd t (msort (trd p)) [] ;
+  in fst p
+;
+
+tree :: Tree
+tree = Fork (Tip 1) (Fork (Tip 3) (Fork (Tip 0) (Tip 2)))
+;
+
+main = transform tree

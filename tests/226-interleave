@@ -1,0 +1,14 @@
+-- Interleave two lists.
+interleave :: [Num] -> [Num] -> [Num]
+interleave xxs yys =
+  match xxs with
+      []     -> yys
+    | x : xs ->
+        match yys with
+            []     -> xxs
+          | y : ys -> x : y : interleave xs ys
+        end
+  end
+;
+
+main = interleave [1,2,3,4] [0,0,0,0,0]

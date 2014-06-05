@@ -1,0 +1,5 @@
+-- Data constructor defined twice.
+data X = A | B
+data Y = B | C
+
+main = 0

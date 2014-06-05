@@ -1,0 +1,42 @@
+-- A sort-of sieve of Eratosthenes, lazily.
+
+filter :: (Num -> Bool) -> [Num] -> [Num]
+filter p xxs =
+  match xxs with
+      []   -> []
+    | x:xs ->
+       match p x with
+           False -> filter p xs
+	 | True  -> x : filter p xs
+       end
+  end
+;
+map :: (Num -> Num) -> [Num] -> [Num]
+map f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : map f xs
+  end
+;
+
+succ :: Num -> Num
+succ x = x + 1
+;
+
+-- Infinite sequence of naturals starting from 2.
+natsFrom2 :: [Num]
+natsFrom2 = 2 : map succ natsFrom2
+;
+
+notDivBy :: Num -> Num -> Bool
+notDivBy p x = x % p != 0
+;
+
+primes :: [Num]
+primes =
+  let sieve :: [Num] -> [Num]
+      sieve pxs = match pxs with p:xs -> p : sieve (filter (notDivBy p) xs) end ;
+  in sieve natsFrom2
+;
+
+main = primes

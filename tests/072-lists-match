@@ -1,0 +1,4 @@
+f :: [Num] -> Num
+f xs = match xs with [] -> 0 | y:ys -> y end ;
+
+main = f []

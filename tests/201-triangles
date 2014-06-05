@@ -1,0 +1,16 @@
+-- Draw triangles.
+
+triangle :: Num -> [Char]
+triangle n = triangle_aux 1 n
+;
+triangle_aux :: Num -> Num -> [Char]
+triangle_aux level n = if level <= n
+                         then repeat level '*' (triangle_aux (level + 1) n)
+                         else []
+                       end
+;
+repeat :: Num -> Char -> [Char] -> [Char]
+repeat n c xs = if n == 0 then '\n':xs else c : repeat (n - 1) c xs end
+;
+
+main = triangle 10

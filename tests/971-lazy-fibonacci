@@ -1,0 +1,26 @@
+-- Infinite stream of fibonacci numbers, lazily-defined.
+
+tail :: [Num] -> [Num]
+tail xxs = match xxs with x:xs -> xs end
+;
+zipWith :: (Num -> Num -> Num) -> [Num] -> [Num] -> [Num]
+zipWith f xxs yys =
+    match xxs with
+        []   -> []
+      | x:xs ->
+          match yys with
+              []   -> []
+            | y:ys -> f x y : zipWith f xs ys
+          end
+    end
+;
+
+add :: Num -> Num -> Num
+add x y = x + y
+;
+
+fib :: [Num]
+fib = 1 : 1 : zipWith add fib (tail fib)
+;
+
+main = fib

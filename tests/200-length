@@ -1,0 +1,4 @@
+length :: [Num] -> Num
+length xxs = match xxs with [] -> 0 | x : xs -> length xs + 1 end
+;
+main = length [1,2,3]

@@ -1,0 +1,30 @@
+-- Calculate pi to a few digits using Machin's formula.
+--    Machin's formula:  PI = 16*arctan(1/5) - 4*arctan(1/239)
+--    the Taylor series: arctan(x) = x - x^3/3 + x^5/5 - x^7/7 - ...
+
+exp :: Num -> Num -> Num
+exp x n = if n == 0 then 1 else x * exp x (n - 1) end
+;
+
+arccot_aux :: Num -> Num -> Num -> Num -> Num
+arccot_aux tol x s n =
+  match s / (n * exp x n) with t ->
+    if t < tol
+      then t
+      else t + arccot_aux tol x (0 - s) (n + 2)
+    end
+  end
+;
+
+arccot :: Num -- Tolerance
+       -> Num -- x
+       -> Num -- tan^(-1) (x^(-1))
+arccot tol x = arccot_aux tol x 1 1
+;
+
+pi :: Num -- Tolerance
+   -> Num
+pi tol = 4 * (4 * arccot tol 5 - arccot tol 239)
+;
+
+main = pi 0

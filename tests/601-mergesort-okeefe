@@ -1,0 +1,74 @@
+-- A variant of mergesort.
+-- Richard O'Keefe, "A smooth applicative merge sort", Research paper 182, Dept of AI, Edinburgh.
+-- Based on the presentation in Larry Paulson's "ML for the working programmer"
+
+reverse_acc :: [Num] -> [Num] -> [Num]
+reverse_acc xxs acc =
+  match xxs with
+      []   -> acc
+    | x:xs -> reverse_acc xs (x:acc)
+  end
+;
+
+reverse :: [Num] -> [Num]
+reverse xs = reverse_acc xs []
+;
+
+mergepairs :: [[Num]] -> Num -> [[Num]]
+mergepairs l1l2ls k =
+  match l1l2ls with
+    l1 : l2ls ->
+      match l2ls with
+          []    -> [l1] -- Singleton list, finished.
+	| l2:ls -> if k % 2 == 1
+                     then l1l2ls
+                     else mergepairs (merge l1 l2 : ls) (k / 2)
+                   end
+      end
+  end
+;
+
+-- Merge two sorted lists into a sorted list.
+merge :: [Num] -> [Num] -> [Num]
+merge xxs yys =
+  match xxs with
+      []     -> yys
+    | x : xs ->
+        match yys with
+            []     -> xxs
+          | y : ys -> if x < y
+                        then x : merge xs  yys
+                        else y : merge xxs ys
+                      end
+        end
+  end
+;
+
+nextrun :: [Num] -> [Num] -> ([Num], [Num])
+nextrun run xxs =
+  match xxs with
+      []   -> (reverse run, [])
+    | x:xs -> if x < (match run with y:ys -> y end)
+                then (reverse run, x:xs)
+                else nextrun (x : run) xs
+              end
+  end
+;
+
+samsorting :: [Num] -> [[Num]] -> Num -> [Num]
+samsorting xxs ls k =
+  match xxs with
+      []   -> match mergepairs ls 0 with y:ys -> y end
+    | x:xs ->
+        match nextrun [x] xs with
+          (run, tail) -> samsorting tail (mergepairs (run : ls) (k + 1)) (k + 1)
+        end
+  end
+;
+
+-- Sort a list.
+msort :: [Num] -> [Num]
+msort xs = samsorting xs [] 0
+;
+
+main = msort [3349, 399, 540, 302, 0, 1007, 1989, 24, 51305, 1611, 375, 1989]

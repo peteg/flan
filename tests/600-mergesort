@@ -1,0 +1,47 @@
+-- Mergesort.
+
+-- Deal a list into two lists of almost-equal length.
+split :: [Num] -> ([Num], [Num])
+split xyys =
+  match xyys with
+      []      -> ([], [])
+    | x : yys ->
+        match yys with
+            []     -> ([x], [])
+          | y : ys ->
+	    match split ys with (as, bs) -> (x : as, y : bs) end
+       end
+  end
+;
+
+-- Merge two sorted lists into a sorted list.
+merge :: [Num] -> [Num] -> [Num]
+merge xxs yys =
+  match xxs with
+      []     -> yys
+    | x : xs ->
+        match yys with
+            []     -> xxs
+          | y : ys ->
+	      match x < y with
+	          False -> y : merge xxs ys
+	        | True  -> x : merge xs yys
+              end
+        end
+  end
+;
+
+-- Sort a list.
+msort :: [Num] -> [Num]
+msort xxs =
+  match xxs with
+      []     -> []
+    | x : xs ->
+        match xs with
+	    []    -> [x]
+	  | dummy -> match split xxs with (as, bs) -> merge (msort as) (msort bs) end
+	end
+  end
+;
+
+main = msort [3349, 399, 540, 302, 0, 1007, 1989, 24, 51305, 1611, 375, 1989]

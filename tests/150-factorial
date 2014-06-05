@@ -1,0 +1,9 @@
+fac :: Num -> Num
+fac x =
+  match x with
+      0 -> 1
+    | y -> x * fac (x - 1)
+  end
+;
+
+main = fac 5

@@ -1,0 +1,7 @@
+f :: Num -> Num
+f x = 3 * x
+;
+g :: Num -> Num
+g x = 4 * x
+;
+main = f (g 2)

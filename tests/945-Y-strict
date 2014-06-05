@@ -1,0 +1,26 @@
+-- Typing the strict Y combinator takes some doing.
+-- Functions in data types, or data types in outer space.
+--  ... and recursive datatypes, too!
+-- http://en.wikipedia.org/wiki/Fixed-point_combinator#Type_for_the_Y_combinator
+-- See also the SML FAQ.
+-- See also Pierce's TaPL.
+
+data Rec = In (Rec -> (Num -> Num))
+
+out :: Rec -> (Rec -> (Num -> Num))
+out r = match r with In x -> x end
+;
+
+delta :: ((Num -> Num) -> (Num -> Num)) -> Rec -> (Num -> Num)
+delta f x a = f (out x x) a
+;
+
+y :: ((Num -> Num) -> (Num -> Num)) -> Num -> Num
+y f = delta f (In (delta f))
+;
+
+facG :: (Num -> Num) -> Num -> Num
+facG f x = if x == 0 then 1 else x * f (x - 1) end
+;
+
+main = y facG 5

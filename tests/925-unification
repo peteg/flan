@@ -1,0 +1,74 @@
+-- Based on the Unification theory distributed with Isabelle
+--    Author:     Martin Coen, Cambridge University Computer Laboratory
+--    Author:     Konrad Slind, TUM & Cambridge University Computer Laboratory
+--    Author:     Alexander Krauss, TUM
+-- and Manna & Waldinger and Paulson
+-- Looks pretty terrible from a complexity viewpoint.
+
+data Term
+  = Var Num
+  | Const Num
+  | Comb Term Term
+
+data Unifier = None | Some [(Num, Term)]
+
+occs :: Term -> Term -> Bool
+occs u v = match v with
+    Var var  -> False
+  | Const c  -> False
+  | Comb m n -> u == m || u == n || occs u m || occs u n
+end
+;
+
+assoc :: Num -> Term -> [(Num, Term)] -> Term
+assoc x t s = match s with
+    []     -> t
+  | b : bs -> match b with (p, q) -> if x == p then q else assoc x t bs end end
+end
+;
+
+subst :: Term -> [(Num, Term)] -> Term
+subst t s = match t with
+    Var var  -> assoc var (Var var) s
+  | Const c  -> Const c
+  | Comb m n -> Comb (subst m s) (subst n s)
+end
+;
+
+comp :: [(Num, Term)] -> [(Num, Term)] -> [(Num, Term)]
+comp s bl = match s with
+    []      -> bl
+  | ab : al -> match ab with (a, b) -> (a, subst b bl) : comp al bl end
+end
+;
+
+unify :: Term -> Term -> Unifier
+unify u v = match u with
+    Var var  -> if occs u v then None else Some [(var, v)] end
+  | Const c  -> match v with
+                  Var var  -> Some [(var, Const c)]
+                | Const d  -> if c == d then Some [] else None end
+                | Comb m n -> None
+                end
+  | Comb m n -> match v with
+                  Var var    -> if occs v u then None else Some [(var, u)] end
+                | Const d    -> None
+                | Comb m2 n2 -> match unify m m2 with
+                                  None   -> None
+                                | Some s -> match unify (subst n s) (subst n2 s) with
+                                              None -> None
+                                            | Some s2 -> Some (comp s s2)
+                                            end
+                                end
+                end
+  end
+;
+
+t :: Term
+t = Comb (Var 0) (Comb (Const 1) (Var 3))
+;
+u :: Term
+u = Comb (Const 56) (Comb (Var 4) (Var 10))
+;
+
+main = unify t u

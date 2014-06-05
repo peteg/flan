@@ -1,0 +1,35 @@
+-- The Y combinator is easy if we have laziness.
+-- ... and it works at all types.
+
+y :: ([Num] -> [Num]) -> [Num]
+y f =
+   let out :: [Num]
+       out = f out ;
+    in out
+;
+
+tail :: [Num] -> [Num]
+tail xxs = match xxs with x:xs -> xs end
+;
+zipWith :: (Num -> Num -> Num) -> [Num] -> [Num] -> [Num]
+zipWith f xxs yys =
+    match xxs with
+        []   -> []
+      | x:xs ->
+          match yys with
+              []   -> []
+            | y:ys -> f x y : zipWith f xs ys
+          end
+    end
+;
+
+add :: Num -> Num -> Num
+add x y = x + y
+;
+
+fibG :: [Num] -> [Num]
+fibG f = 1 : 1 : zipWith add f (tail f)
+
+;
+
+main = y fibG

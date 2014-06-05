@@ -1,0 +1,15 @@
+filter :: (Num -> Bool) -> [Num] -> [Num]
+filter p xxs =
+  match xxs with
+      []   -> []
+    | x:xs ->
+       match p x with
+           False -> filter p xs
+	 | True  -> x : filter p xs
+       end
+  end
+;
+main =
+  let l5 :: Num -> Bool
+      l5 x = x < 5 ;
+  in  filter l5 [1,2,3,4,5,6,7,8,9]

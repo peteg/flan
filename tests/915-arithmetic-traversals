@@ -1,0 +1,64 @@
+-- Pre-/post-/in-order traversals.
+
+data Expr = Constant [Char] -- No function to convert Num to [Char], so cheat.
+          | Add Expr Expr
+          | Sub Expr Expr
+          | Mul Expr Expr
+          | Div Expr Expr
+
+append :: [Char] -> [Char] -> [Char]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end
+;
+
+preorder :: Expr -> [Char]
+preorder e =
+  match e with
+      Constant n -> n
+    | Add f g    -> append ['a','d','d','('] (append (preorder f) (append [',',' '] (append (preorder g) [')'])))
+    | Sub f g    -> append ['s','u','b','('] (append (preorder f) (append [',',' '] (append (preorder g) [')'])))
+    | Mul f g    -> append ['m','u','l','('] (append (preorder f) (append [',',' '] (append (preorder g) [')'])))
+    | Div f g    -> append ['d','i','v','('] (append (preorder f) (append [',',' '] (append (preorder g) [')'])))
+  end
+;
+
+inorder :: Expr -> [Char]
+inorder e =
+  match e with
+      Constant n -> n
+    | Add f g    -> append ['('] (append (inorder f) (append ['+'] (append (inorder g) [')'])))
+    | Sub f g    -> append ['('] (append (inorder f) (append ['-'] (append (inorder g) [')'])))
+    | Mul f g    -> append ['('] (append (inorder f) (append ['*'] (append (inorder g) [')'])))
+    | Div f g    -> append ['('] (append (inorder f) (append ['/'] (append (inorder g) [')'])))
+  end
+;
+
+-- Hmm... '-' and '/' are not commutative, so the order of printing
+-- their arguments matters.
+postorder :: Expr -> [Char]
+postorder e =
+  match e with
+      Constant n -> ' ' : n
+    | Add f g    -> append (postorder f) (append (postorder g) ['+'])
+    | Sub f g    -> append (postorder f) (append (postorder g) ['-'])
+    | Mul f g    -> append (postorder f) (append (postorder g) ['*'])
+    | Div f g    -> append (postorder f) (append (postorder g) ['/'])
+  end
+;
+
+main =
+  let e :: Expr
+      e = Add (Constant ['2']) (Sub (Constant ['3']) (Mul (Constant ['2']) (Constant ['7']))) ;
+
+      preo :: [Char]
+      preo = preorder e ;
+
+      ino :: [Char]
+      ino = inorder e ;
+
+      posto :: [Char]
+      posto = postorder e ;
+  in (preo, ino, posto)

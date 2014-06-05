@@ -1,0 +1,89 @@
+-- Tree drawing from the Haskell Data.Tree library.
+-- We need laziness to cope with "repeat".
+
+-- | Multiway (rose) trees.
+data Tree = Node Char [Tree]
+
+append :: [Char] -> [Char] -> [Char]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end
+;
+append2 :: [[Char]] -> [[Char]] -> [[Char]]
+append2 xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append2 xs ys)
+  end
+;
+-- This definition is more space efficient (constant space) than the obvious one.
+repeat :: [Char] -> [[Char]]
+repeat str = let strs :: [[Char]]
+                 strs = str : strs ;
+             in strs
+;
+
+unlines :: [[Char]] -> [Char]
+unlines lines =
+  let app :: [Char] -> [Char] -> [Char]
+      app xxs ys = match xxs with [] -> '\n':ys | x:xs -> x : app xs ys end ;
+      loop :: [[Char]] -> [Char]
+      loop lls = match lls with [] -> [] | l:ls -> app l (loop ls) end ;
+  in loop lines
+;
+zipWith :: ([Char] -> [Char] -> [Char]) -> [[Char]] -> [[Char]] -> [[Char]]
+zipWith f aas bbs =
+  match aas with
+      []   -> []
+    | a:as -> match bbs with
+                  []   -> []
+                | b:bs -> f a b : zipWith f as bs
+              end
+  end
+;
+
+draw :: Tree -> [[Char]]
+draw t = match t with Node x sts -> [x] : drawSubTrees sts end
+;
+
+drawSubTrees :: [Tree] -> [[Char]]
+drawSubTrees stts =
+  match stts with
+      []    -> []
+    | s:tts -> match tts with
+                   []   -> ['|'] : shift ['`','-',' '] [' ',' ',' '] (draw s)
+                 | t:ts -> ['|'] : (append2 (shift ['+','-',' '] ['|',' ',' '] (draw s)) (drawSubTrees tts))
+               end
+  end
+;
+
+shift :: [Char] -> [Char] -> [[Char]] -> [[Char]]
+shift first other = zipWith append (first : repeat other)
+;
+
+t0 :: Tree
+t0 = Node 'a' []
+;
+
+t1 :: Tree
+t1 = Node 'a' [ Node 'b' [], Node 'c' [] ]
+;
+
+t2 :: Tree
+t2 = Node 'a' [ Node 'b' [Node 'd' []], Node 'c' [] ]
+;
+
+t3 :: Tree
+t3 = Node 'a' [ Node 'b' []
+              , Node 'c' []
+              , Node 'd' [ Node 'e' []
+                         , Node 'f' []
+                         , Node 'g' [ Node 'i' [Node 'k' []]]
+                         , Node 'h' []]
+              , Node 'j' []
+              ]
+;
+
+main = unlines (draw t3)

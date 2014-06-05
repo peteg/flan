@@ -1,0 +1,272 @@
+-- Bird/Wadler "Numroduction to Functional Programming"
+-- p239 Huffman coding trees.
+
+-- ----------------------------------------
+
+-- Binary trees with the data in the leaves, the result of coding.
+data Tree = Node Tree Tree | Leaf Char
+
+-- A step at a node in a tree. Image these are bits.
+data Step = Left | Right
+
+-- Huffman trees, for encoding.
+data HTree = HLeaf Num Char | HNode Num HTree HTree
+
+-- ----------------------------------------
+-- Standard functions.
+
+append :: [(Char, [Step])] -> [(Char, [Step])] -> [(Char, [Step])]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end
+;
+appendE :: [Step] -> [Step] -> [Step]
+appendE xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (appendE xs ys)
+  end
+;
+
+concatE :: [[Step]] -> [Step]
+concatE xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> appendE x (concatE xs)
+  end
+;
+
+head :: [HTree] -> HTree
+head xxs = match xxs with x : xs -> x end
+;
+
+lookup :: Char -> [(Char, [Step])] -> [Step]
+lookup c al =
+  match al with x:xs -> match x with (alc,ss) -> if c == alc then ss else lookup c xs end end end
+;
+
+map :: ((Char, Num) -> HTree) -> [(Char, Num)] -> [HTree]
+map f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : map f xs
+  end
+;
+mapE :: (Char -> [Step]) -> [Char] -> [[Step]]
+mapE f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : mapE f xs
+  end
+;
+
+-- Accumulator reverse.
+
+reverse_acc :: [Step] -> [Step] -> [Step]
+reverse_acc xxs acc =
+  match xxs with
+      []   -> acc
+    | x:xs -> reverse_acc xs (x:acc)
+  end
+;
+reverse :: [Step] -> [Step]
+reverse xs = reverse_acc xs []
+;
+
+single :: [HTree] -> Bool
+single tts = match tts with t:ts -> match ts with [] -> True | dummy -> False end end
+;
+
+until :: ([HTree] -> Bool) -> ([HTree] -> [HTree]) -> [HTree] -> [HTree]
+until p f x = if p x then x else until p f (f x) end
+;
+
+-- ----------------------------------------
+-- Tree functions.
+
+-- Trace the given path through a tree.
+trace :: Tree -> [Step] -> Char
+trace t steps =
+  match steps with
+      []   -> match t with Leaf c -> c end
+    | s:ss ->
+        match t with
+          Node l r ->
+            match s with
+                Left -> trace l ss
+              | Right -> trace r ss
+            end
+        end
+  end
+;
+
+unlabel :: HTree -> Tree
+unlabel ht =
+  match ht with
+      HLeaf n c   -> Leaf c
+    | HNode n l r -> Node (unlabel l) (unlabel r)
+  end
+;
+
+weight :: HTree -> Num
+weight ht = match ht with HLeaf n c -> n | HNode n l r -> n end
+;
+
+hleaf :: (Char, Num) -> HTree
+hleaf cn = match cn with (c, n) -> HLeaf n c end
+;
+
+-- ----------------------------------------
+-- Decode a string (paths in the tree).
+
+decode :: Tree -> [Step] -> [Char]
+decode t =
+  let traces :: Tree -> [Step] -> [Char]
+      traces ct steps =
+        match ct with
+            Leaf c  -> c : (match steps with [] -> [] | dummy -> traces t steps end)
+          | Node l r ->
+              match steps with
+                  []   -> []
+                | s:ss -> match s with Left -> traces l ss | Right -> traces r ss end
+              end
+        end ;
+  in traces t
+;
+
+-- ----------------------------------------
+-- Compute the frequencies of the characters in a string.
+-- Sort the result by frequency.
+
+freq :: [Char] -> [(Char, Num)]
+freq cs =
+  let freq_acc :: [Char] -> [(Char, Num)] -> [(Char, Num)]
+      freq_acc cs acc = match cs with [] -> acc | c:cs -> freq_acc cs (addChar c acc) end ;
+  in freq_sort (freq_acc cs [])
+;
+
+addChar :: Char -> [(Char, Num)] -> [(Char, Num)]
+addChar c ffs =
+  match ffs with
+      []     -> [(c, 1)]
+    | fcn:fs ->
+        match fcn with (fc, n) -> if fc == c then (fc, n + 1):fs else fcn : addChar c fs end end
+  end
+;
+
+-- Mergesort.
+
+-- Deal a list into two lists of almost-equal length.
+split :: [(Char, Num)] -> ([(Char, Num)], [(Char, Num)])
+split xyys =
+  match xyys with
+      []      -> ([], [])
+    | x : yys ->
+        match yys with
+            []     -> ([x], [])
+          | y : ys ->
+	    match split ys with (as, bs) -> (x : as, y : bs) end
+       end
+  end
+;
+
+-- Merge two sorted lists into a sorted list.
+merge :: [(Char, Num)] -> [(Char, Num)] -> [(Char, Num)]
+merge xxs yys =
+  match xxs with
+      []    -> yys
+    | xm:xs ->
+        match yys with
+            []    -> xxs
+          | yn:ys ->
+	      match xm with (x, m) -> match yn with (y, n) ->
+                if m < n then (x, m) : merge xs yys
+                         else (y, n) : merge xxs ys
+              end end end
+        end
+  end
+;
+
+-- Sort a list.
+freq_sort :: [(Char, Num)] -> [(Char, Num)]
+freq_sort xxs =
+  match xxs with
+      []     -> []
+    | x : xs ->
+        match xs with
+	    []    -> [x]
+	  | dummy -> match split xxs with (as, bs) -> merge (freq_sort as) (freq_sort bs) end
+	end
+  end
+;
+
+-- ----------------------------------------
+-- Compute the Huffman code tree for a given frequency of characters.
+-- Heaps would be better for the priority queue operations.
+
+-- Insert a weighted tree into a list of weighted trees.
+insert :: HTree -> [HTree] -> [HTree]
+insert ht hts =
+  match hts with
+      []  -> [ht]
+    | t:ts -> if weight ht <= weight t then ht:hts else t : insert ht ts end
+  end
+;
+
+-- Combine the two lightest trees into a single one.
+combine :: [HTree] -> [HTree]
+combine t1t2ts =
+  match t1t2ts with t1:t2ts -> match t2ts with t2:ts ->
+   insert (HNode (weight t1 + weight t2) t1 t2) ts
+  end end
+;
+
+-- Build a Huffman tree.
+build :: [(Char, Num)] -> Tree
+build str = unlabel (head (until single combine (map hleaf str)))
+;
+
+-- Turn a Huffman tree into an association list.
+-- "append" is an inefficient way to do this; should use difference lists instead.
+mkAssocList :: Tree -> [(Char, [Step])]
+mkAssocList t =
+  let mkAL :: Tree -> [Step] -> [(Char, [Step])]
+      mkAL t steps =
+        match t with
+            Leaf c -> [(c, reverse steps)]
+          | Node l r -> append (mkAL l (Left:steps)) (mkAL r (Right:steps))
+        end ;
+  in mkAL t []
+;
+
+-- ----------------------------------------
+-- Encode a string.
+
+encode :: [(Char, [Step])] -> [Char] -> [Step]
+encode al cs =
+  let encodeC :: Char -> [Step]
+      encodeC c = lookup c al ;
+   in concatE (mapE encodeC cs)
+;
+
+-- ----------------------------------------
+main =
+  let str :: [Char]
+      str = ['C','o','m','p','r','e','s','s','i','o','n',' ','t','e','s','t','.'] ;
+--       str = ['a','b','c'] ;
+
+      freqs :: [(Char, Num)]
+      freqs = freq str ;
+
+      tree :: Tree
+      tree = build freqs ;
+
+      al :: [(Char, [Step])]
+      al = mkAssocList tree ;
+
+      encStr :: [Step]
+      encStr = encode al str ;
+
+  in (tree, encStr, decode tree encStr)

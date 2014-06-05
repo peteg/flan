@@ -1,0 +1,22 @@
+f :: Num
+f = let x :: Num
+        x = 5;
+     in let y :: Num
+            y = 10;
+         in y * x
+;
+
+-- Two possible parses:
+-- f = (let x = 5 in let y = 10 in y) * x
+-- f = let x = 5 in (let y = 10 in y * x)
+
+main = let x :: Num
+           x = 5;
+        in 4 * x
+
+-- Two parses: 
+-- main = (let x = 5 in 4) * x
+-- main = (let x = 5 in (4 * x))
+
+-- We want the second one. RESOLVED, a bare "let" cannot appear on the
+-- left of an operator, so we must get the second one.

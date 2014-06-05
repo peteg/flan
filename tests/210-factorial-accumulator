@@ -1,0 +1,11 @@
+fac_acc :: Num -> Num -> Num
+fac_acc x acc =
+  match x with
+      0 -> acc
+    | y -> fac_acc (x - 1) (x * acc)
+  end
+;
+fac :: Num -> Num
+fac x = fac_acc x 1
+;
+main = fac 5

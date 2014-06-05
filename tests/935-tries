@@ -1,0 +1,89 @@
+-- Tries: represent a set of strings as paths in a tree.
+-- Based on an old cs1011 exercise by Manuel Chakravarty.
+
+data Set = Node Bool [(Char, Set)] 
+
+data MSet = Just Set | Nothing
+
+lookup :: Char -> [(Char, Set)] -> MSet
+lookup c xxs =
+  match xxs with
+      []   -> Nothing
+    | x:xs -> match x with (c1, d) -> if c == c1 then Just d else lookup c xs end end
+  end
+;
+foldr :: ([Char] -> Set -> Set) -> Set -> [[Char]] -> Set
+foldr f z xxs =
+  match xxs with
+      []   -> z
+    | x:xs -> f x (foldr f z xs)
+  end
+;
+
+-- The empty set.
+
+emptySet :: Set
+emptySet = Node False []
+;
+
+-- Is a word in the set?
+
+checkWord :: [Char] -> Set -> Bool
+checkWord ccs d =
+  match d with Node isEnd ds ->
+    match ccs with
+        []   -> isEnd
+      | c:cs -> match lookup c ds with
+                    Nothing -> False
+                  | Just d1 -> checkWord cs d1
+                end
+    end
+  end
+;
+    
+-- Add a new word to the set.
+
+addWord :: [Char] -> Set -> Set
+addWord ccs d =
+  match d with Node isEnd ds ->
+    match ccs with
+        []   -> Node True ds
+      | c:cs -> Node isEnd (addWordList ccs ds)
+    end
+  end
+;
+
+addWordList:: [Char] -> [(Char, Set)] -> [(Char, Set)]
+addWordList ccs dds =
+  match ccs with c:cs ->
+    match dds with
+        []   -> [(c, addWord cs emptySet)]
+      | d:ds ->
+          match d with (c1, ds1) ->
+            if c == c1
+              then (c, addWord cs ds1) : ds
+              else d : addWordList ccs ds
+            end
+          end
+    end
+  end
+;
+
+-- Tests
+
+words :: [[Char]]
+words = [ ['d', 'o', 'g']
+        , ['d', 'o']
+        , ['d', 'o', 'g', 'f', 'i', 's', 'h']
+        , ['d', 'o', 'g', 'g', 'y']
+        , ['d', 'o', 'g', 's']
+        , ['d', 'o', 'g', 'd', 'o', 'm']
+        , ['d', 'o', 'g', 'f', 'i', 'g', 'h', 't']
+        , ['d', 'o', 'g', 'm', 'a']
+        , ['d', 'o', 'g', 'g', 'e', 'd']
+        , ['d', 'o', 'g', 'g', 'e', 'r', 'e', 'l']
+        , ['d', 'o', 'g', 's', 'b', 'o', 'd', 'y']
+        ]
+;
+
+main = foldr addWord emptySet words

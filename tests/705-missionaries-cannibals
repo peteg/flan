@@ -1,0 +1,124 @@
+-- Cannibals and missionaries.
+-- http://en.wikipedia.org/wiki/Missionaries_and_cannibals_problem
+--
+-- In the missionaries and cannibals problem, three missionaries and
+-- three cannibals must cross a river using a boat which can carry at
+-- most two people, under the constraint that, for both banks, if there
+-- are missionaries present on the bank, they cannot be outnumbered by
+-- cannibals (if they were, the cannibals would eat the missionaries.)
+-- The boat cannot cross the river by itself with no people on board.
+
+-- The standard solution is to build a transition graph, where each
+-- node refers to a global state of affairs and each edge is a
+-- traversal of the river.
+
+-- The output will be a sequence of state transitions (implying the
+-- boat crossings) that shows how to get everyone across the river.
+
+----------------------------------------
+-- Standard list functions.
+
+append :: [(Num, Num, Num)] -> [(Num, Num, Num)] -> [(Num, Num, Num)]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end
+;
+concat :: [[(Num, Num, Num)]] -> [(Num, Num, Num)]
+concat xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> append x (concat xs)
+  end
+;
+mem :: (Num, Num, Num) -> [(Num, Num, Num)] -> Bool
+mem x yys = match yys with [] -> False | y:ys -> if x == y then True else mem x ys end end
+;
+
+----------------------------------------
+-- We adopt the state representation that John McCarthy attributes to
+-- Saul Amarel: track the number of cannibals, missionaries and boats
+-- on the original bank.
+
+-- data (Num, Num, Num) = S Num Num Num
+
+-- The possible successor states for a given one.
+-- This just encodes what happens if the boat is used to make a trip across the river.
+-- i.e. it does not enforce the more-missionaries-than-cannibals constraint.
+
+when :: Bool -> (Num, Num, Num) -> [(Num, Num, Num)]
+when b s = if b then [s] else [] end
+;
+
+successors :: (Num, Num, Num) -> [(Num, Num, Num)]
+successors s = match s with (c, m, b) ->
+  if b == 1
+    then concat [ when (c > 0) (c - 1, m, 0)
+                , when (c > 1) (c - 2, m, 0)
+                , when (m > 0) (c, m - 1, 0)
+                , when (m > 1) (c, m - 2, 0)
+                , when (c > 0 && m > 0) (c - 1, m - 1, 0)
+                ]
+    else concat [ when (c < 3) (c + 1, m, 1)
+                , when (c < 2) (c + 2, m, 1)
+                , when (m < 3) (c, m + 1, 1)
+                , when (m < 2) (c, m + 2, 1)
+                , when (c < 3 && m < 3) (c + 1, m + 1, 1)
+                ]
+  end end
+;
+
+-- Initially everyone and everything's on the initial bank.
+
+initialState :: (Num, Num, Num)
+initialState = (3, 3, 1)
+;
+
+-- Apply the constraints: filter out states that violate the
+-- more-missionaries-than-cannibals constraint.
+
+constraint :: (Num, Num, Num) -> Bool
+constraint s = match s with (c, m, b) -> (m == 0 || m >= c) && (m == 3 || 3 - m >= 3 - c) end
+;
+
+constraints :: [(Num, Num, Num)] -> [(Num, Num, Num)]
+constraints sss =
+  match sss with
+      []   -> []
+    | s:ss -> if constraint s then s : (constraints ss) else constraints ss end
+  end
+;
+
+-- The goal is to get everyone to the other bank (we don't explicitly
+-- care about the boat, but it will end up on the other bank too).
+
+goal :: (Num, Num, Num) -> Bool
+goal s = match s with (c, m, b) -> c == 0 && m == 0 end
+;
+
+----------------------------------------
+-- Now, use depth-first-search to find a solution.
+
+dfs :: (Num, Num, Num) -> [(Num, Num, Num)] -> [(Num, Num, Num)]
+dfs s visited =
+  if mem s visited
+    then []
+    else if goal s
+         then [s] -- Got there in no steps.
+         else dfs_inner s (constraints (successors s)) (s:visited)
+  end end
+;
+
+dfs_inner :: (Num, Num, Num) -> [(Num, Num, Num)] -> [(Num, Num, Num)] -> [(Num, Num, Num)]
+dfs_inner s toVisit visited =
+  match toVisit with
+      []   -> []
+    | x:xs -> match dfs x visited with
+                  []   -> dfs_inner s xs visited -- there is no solution starting at 'x'.
+                | path -> s : path               -- there is a solution starting at 's'.
+              end
+  end
+;
+
+main = dfs initialState []

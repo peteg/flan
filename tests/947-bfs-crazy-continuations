@@ -1,0 +1,110 @@
+{-
+
+https://groups.google.com/forum/#!topicsearchin/comp.lang.functional/fourman$20breadth/comp.lang.functional/UakMdGvPa0w
+
+Here's an example due to Mads Tofte. My student John Longley has given a proof
+that it is equivalent to the usual BFS of a forest, as given in earlier postings.
+The setting for the proof is a semantics for (the functional parts of) ML given
+in a paper by Wesley Phoa and me, in this year's ICALP.
+
+(* Breadth - first search of binary tree using recursive continuations *)
+
+datatype 'item tree = L of 'item
+                    | N of 'item * 'item tree * 'item tree;
+
+datatype 'item cont = C of 'item cont -> 'item list   (* recursive continuations *)                    | D ;
+
+(*  apply: cont -> cont -> 'item list *)
+fun apply (C cf) c = cf c
+  | apply D (C cf) = cf D
+  | apply D D      = [] ;
+
+fun cons a b = a :: b
+
+(*  breadth : tree -> cont -> cont -> list *)
+fun breadth (L i)      now later = i :: apply now later
+  | breadth (N(i,l,r)) now later = i :: apply now (C ( apply later o C o breadth l o C o breadth r));
+
+fun run t = breadth t D D ;
+
+(* example *)
+
+val t = N(1,
+          N(2,
+            N(4,
+              N(8, L 16, L 17),
+              N(9, L 18, L 19)),
+            N(5,
+              N(10,L 20, L 21),
+              N(11,L 22, L 23))
+           ),
+          N(3,
+            N(6,
+              N(12, L 24, L 25),
+              N(13, L 26, L 27)),
+            N(7,
+              N(14, L 28, L 29),
+              L 15)
+           )
+         );
+
+
+--
+Prof. Michael P. Fourman                     email        mi...@dcs.ed.ac.uk
+Dept. of Computer Science                    'PHONE (+44) (0)31-650 5198 (sec)
+JCMB, King's Buildings, Mayfield Road,              (+44) (0)31-650 5197
+Edinburgh EH9 3JZ, Scotland, UK                 FAX (+44) (0)31 667 7209
+
+-}
+
+data Tree
+  = L Num
+  | N Num Tree Tree
+
+data Cont
+  = C (Cont -> [Num])
+  | D
+
+apply :: Cont -> Cont -> [Num]
+apply cont c =
+  match cont with
+      C cf -> cf c
+    | D    ->
+    match c with
+        C cf -> cf D
+      | D -> []
+    end
+  end
+;
+
+-- Hack around lack of polymorphism / function composition.
+breadth :: Tree -> Cont -> Cont -> [Num]
+breadth t now later =
+  match t with
+      L i     -> i : apply now later
+    | N i l r ->
+       let later2 :: Cont -> [Num]
+           later2 x = apply later (C (breadth l (C (breadth r x)))) ;
+        in i : apply now (C later2)
+  end
+;
+
+run :: Tree -> [Num]
+run t = breadth t D D
+;
+
+t :: Tree
+t = N 1
+      (N 2
+         (N 4 (N 8 (L 16) (L 17))
+              (N 9 (L 18) (L 19)))
+         (N 5 (N 10 (L 20) (L 21))
+              (N 11 (L 22) (L 23))) )
+      (N 3
+         (N 6 (N 12 (L 24) (L 25))
+              (N 13 (L 26) (L 27)))
+         (N 7 (N 14 (L 28) (L 29))
+              (L 15)) )
+;
+
+main = run t

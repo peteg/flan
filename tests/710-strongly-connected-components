@@ -1,0 +1,109 @@
+-- Compute the strongly-connected components of a directed graph.
+-- "spectral/scc/Digraph.hs" From the nofib suite of Haskell benchmarks.
+
+-- Vertices are numbered, edges are pairs of vertices.
+
+append :: [Num] -> [Num] -> [Num]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end
+;
+elem :: Num -> [Num] -> Bool
+elem x yys = match yys with [] -> False | y:ys -> if x == y then True else elem x ys end end
+;
+map :: ((Num, Num) -> (Num, Num)) -> [(Num, Num)] -> [(Num, Num)]
+map f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : map f xs
+  end
+;
+
+stronglyConnComp :: [(Num, Num)] -> [Num] -> [[Num]]
+stronglyConnComp es vs =
+  match span_tree (new_range (reversed_edges es))
+                   ([], [])
+                   ( match dfs (new_range es) ([], []) vs with (x, y) -> y end )
+  with
+    (x, y) -> y
+  end
+;
+
+reversed_edges :: [(Num, Num)] -> [(Num, Num)]
+reversed_edges es = map swap es
+;
+
+swap :: (Num, Num) -> (Num, Num)
+swap xy = match xy with (x, y) -> (y, x) end
+;
+
+new_range :: [(Num, Num)] -> Num -> [Num]
+new_range xyxys w =
+  match xyxys with
+      []     -> []
+    | xy:xys -> match xy with (x, y) ->
+                  if x == w
+                    then y : (new_range xys w)
+                    else new_range xys w
+                  end
+                end
+  end
+;
+
+span_tree :: (Num -> [Num])
+          -> ([Num], [[Num]])
+          -> [Num]
+          -> ([Num], [[Num]])
+span_tree r vsns xxs =
+  match xxs with
+      []   -> vsns
+    | x:xs -> match vsns with (vs, ns) ->
+                if elem x vs
+                  then span_tree r vsns xs
+                  else match dfs r (x:vs, []) (r x) with
+                         (vs1, ns1) -> span_tree r (vs1, (x:ns1):ns) xs
+                       end
+                 end
+              end
+  end
+;
+
+dfs :: (Num -> [Num])
+    -> ([Num], [Num])
+    -> [Num]
+    -> ([Num], [Num])
+dfs r vsns xxs =
+  match xxs with
+      []   -> vsns
+    | x:xs -> match vsns with (vs, ns) ->
+                if elem x vs
+                  then dfs r vsns xs
+                  else match dfs r (x:vs, []) (r x) with
+                         (vs1, ns1) -> dfs r (vs1, append (x:ns1) ns) xs
+                       end
+                end
+              end
+  end
+;
+
+vertices :: [Num]
+vertices = [1,2,3,4,5,6,7]
+;
+
+edges :: [(Num, Num)]
+edges = [ (2, 1)
+        , (3, 2)
+        , (3, 4)
+        , (3, 7)
+        , (4, 3)
+        , (5, 1)
+        , (5, 6)
+        , (5, 7)
+        , (6, 5)
+        , (7, 6)
+        ]
+;
+
+main = stronglyConnComp edges vertices

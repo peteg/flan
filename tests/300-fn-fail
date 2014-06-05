@@ -1,0 +1,5 @@
+-- 'f' is declared constant but asks for an argument.
+f :: Num
+f x = 3
+;
+main = 0

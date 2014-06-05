@@ -1,0 +1,307 @@
+-- Print a tree, following Andrew Kennedy, Functional Pearl: "Drawing Trees", JFP 6(3) 1996.
+
+-- | Multiway (rose) trees.
+-- Due to a lack of polymorphism, hardwire (Data :: Num, Position :: Num).
+-- The initial value of Position does not matter.
+data Tree = Node (Num, Num) [Tree]
+
+----------------------------------------
+
+-- Boilerplate.
+
+foldl :: ([(Num, Num)] -> [(Num, Num)] -> [(Num, Num)]) -> [(Num, Num)] -> [[(Num, Num)]] -> [(Num, Num)]
+foldl f z xxs =
+  match xxs with [] -> z | x:xs -> foldl f (f z x) xs end
+;
+foldlT :: ([Shape] -> Tree -> [Shape]) -> [Shape] -> [Tree] -> [Shape]
+foldlT f z xxs =
+  match xxs with [] -> z | x:xs -> foldlT f (f z x) xs end
+;
+max :: Num -> Num -> Num
+max x y = if x < y then y else x end
+;
+
+-- List boilerplate.
+
+map :: (Num -> Num) -> [Num] -> [Num]
+map f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : map f xs
+  end
+;
+mapEN :: ((Num, Num) -> (Num, Num)) -> [(Num, Num)] -> [(Num, Num)]
+mapEN f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : mapEN f xs
+  end
+;
+mapEsN :: (([(Num, Num)], Num) -> [(Num, Num)]) -> [([(Num, Num)], Num)] -> [[(Num, Num)]]
+mapEsN f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : mapEsN f xs
+  end
+;
+mapT :: (Tree -> (Tree, [(Num, Num)])) -> [Tree] -> [(Tree, [(Num, Num)])]
+mapT f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : mapT f xs
+  end
+;
+mapTN :: ((Tree, Num) -> Tree) -> [(Tree, Num)] -> [Tree]
+mapTN f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : mapTN f xs
+  end
+;
+reverse_acc :: [Num] -> [Num] -> [Num]
+reverse_acc xxs acc =
+  match xxs with
+      []   -> acc
+    | x:xs -> reverse_acc xs (x:acc)
+  end
+;
+reverse :: [Num] -> [Num]
+reverse xs = reverse_acc xs []
+;
+reverse_accE :: [[(Num, Num)]] -> [[(Num, Num)]] -> [[(Num, Num)]]
+reverse_accE xxs acc =
+  match xxs with
+      []   -> acc
+    | x:xs -> reverse_accE xs (x:acc)
+  end
+;
+reverseE :: [[(Num, Num)]] -> [[(Num, Num)]]
+reverseE xs = reverse_accE xs []
+;
+-- This is a bit strict. FIXME
+unzipTE :: [(Tree, [(Num, Num)])] -> ([Tree], [[(Num, Num)]])
+unzipTE xyxys =
+  match xyxys with
+      []     -> ([], [])
+    | xy:xys -> match xy with (x, y) -> match unzipTE xys with (xs, ys) -> (x : xs, y : ys) end end
+  end
+;
+zipTP :: [Tree] -> [Num] -> [(Tree, Num)]
+zipTP xxs yys =
+  match xxs with
+      []   -> []
+    | x:xs ->
+        match yys with
+            []   -> []
+          | y:ys -> (x, y) : zipTP xs ys
+        end
+  end
+;
+zipEP :: [[(Num, Num)]] -> [Num] -> [([(Num, Num)], Num)]
+zipEP xxs yys =
+  match xxs with
+      []   -> []
+    | x:xs ->
+        match yys with
+            []   -> []
+          | y:ys -> (x, y) : zipEP xs ys
+        end
+  end
+;
+zipWith :: (Num -> Num -> Num) -> [Num] -> [Num] -> [Num]
+zipWith f xxs yys =
+  match xxs with
+      []   -> []
+    | x:xs ->
+        match yys with
+            []   -> []
+          | y:ys -> f x y : zipWith f xs ys
+        end
+  end
+;
+
+----------------------------------------
+
+-- Input: Tree a
+-- Ouput: Tree (a, Double) horizontal position relative to parent.
+
+-- | Moving a tree is just a matter of moving the root.
+moveTree :: (Tree, Num) -> Tree
+moveTree tx1 = match tx1 with (t, x1) ->
+  match t with Node lx subtrees -> match lx with (l, x) ->
+    Node (l, x + x1) subtrees
+  end end end
+;
+
+-- | Record the 'extent' of a tree: (leftmost position, rightmost
+-- position) at each depth, root first.
+-- type Extent = [(Double, Double)]
+
+moveExtent :: ([(Num, Num)], Num) -> [(Num, Num)]
+moveExtent ex1 = match ex1 with (e, x1) ->
+  let f :: (Num, Num) -> (Num, Num)
+      f pq = match pq with (p, q) -> (p + x1, q + x1) end ;
+  in mapEN f e
+  end
+;
+
+-- | Merge two extents, taking the leftmost positions from the first
+-- extent and the rightmost from the second.
+merge :: [(Num, Num)] -> [(Num, Num)] -> [(Num, Num)]
+merge pps qqs =
+  match pps with
+      []   -> qqs
+    | p:ps ->
+        match qqs with
+            []   -> pps
+          | q:qs -> match p with (pl, pr) -> match q with (ql, qr) ->
+                      (pl, qr) : merge ps qs
+                    end end
+        end
+  end
+;
+
+-- | Lift to a list of extents.
+mergeList :: [[(Num, Num)]] -> [(Num, Num)]
+mergeList = foldl merge []
+;
+
+-- | Compute the minimum distance beween the two root nodes of two
+-- | extents, assuming we separate trees by 1 unit.
+fit :: [(Num, Num)] -> [(Num, Num)] -> Num
+fit pps qqs =
+  match pps with
+      []   -> 0
+    | p:ps ->
+        match qqs with
+            []   -> 0
+          | q:qs -> match p with (pl, pr) -> match q with (ql, qr) ->
+                      max (fit ps qs) (pr - ql + 1)
+                    end end
+        end
+  end
+;
+
+-- | Compute the positions of each subtress relative to the leftmost
+-- subtree, which has position 0.
+fitListLeft :: [[(Num, Num)]] -> [Num]
+fitListLeft =
+  let fitList1 :: [(Num, Num)] -> [[(Num, Num)]] -> [Num]
+      fitList1 acc ees =
+        match ees with
+            []   -> []
+          | e:es ->
+              let x :: Num
+                  x = fit acc e ;
+              in x : fitList1 (merge acc (moveExtent (e, x))) es
+        end ;
+  in fitList1 []
+;
+
+-- | Compute the positions of each subtress relative to the rightmost
+-- subtree, which has position 0.
+fitListRight :: [[(Num, Num)]] -> [Num]
+fitListRight es =
+  let fitList1 :: [(Num, Num)] -> [[(Num, Num)]] -> [Num]
+      fitList1 acc ees =
+        match ees with
+            []   -> []
+          | e:es ->
+              let x :: Num
+                  x = 0 - fit e acc ;
+              in x : fitList1 (merge (moveExtent (e, x)) acc) es 
+        end ;
+  in reverse (fitList1 [] (reverseE es))
+;
+
+-- | Average the two positions to get a symmetric layout.
+fitList :: [[(Num, Num)]] -> [Num]
+fitList es =
+  let f :: Num -> Num -> Num
+      f x y = (x + y) / 2 ;
+  in zipWith f (fitListLeft es) (fitListRight es)
+;
+
+-- | Finally design the tree layout.  Layout the subtrees and fit them
+-- together symmetrically, then add this node at position 0.
+designTree :: Tree -> (Tree, [(Num, Num)])
+designTree t =
+  match t with Node lx subtrees -> match lx with (l, x) ->
+    match unzipTE (mapT designTree subtrees) with
+      (trees, extents) ->
+        let positions :: [Num]
+            positions        = fitList extents ;
+            ptrees :: [Tree]
+            ptrees           = mapTN  moveTree   (zipTP trees   positions) ;
+            pextents :: [[(Num, Num)]]
+            pextents         = mapEsN moveExtent (zipEP extents positions) ;
+        in (Node (l, 0) ptrees, (0, 0) : mergeList pextents)
+      end
+  end end
+;
+
+designTreeW :: Tree -> Tree
+designTreeW t = match designTree t with (t1, extents) -> t1 end
+;
+
+----------------------------------------
+
+-- Take the laid-out tree and scale and draw it.
+-- Arbitrarily choose a fixed canvas size and node spacing.
+-- Clearly this can be done better.
+
+width :: Num
+width = 1000
+;
+height :: Num
+height = 1000
+;
+
+xStep :: Num
+xStep = 100
+;
+
+yStep :: Num
+yStep = 100
+;
+
+layoutTree_aux :: Num -- x-coordinate of parent
+               -> Num -- y-coordinate of parent
+               -> [Shape]
+               -> Tree
+               -> [Shape]
+layoutTree_aux x0 y0 shapes t =
+  match t with Node lx subtrees -> match lx with (l, x) ->
+    let x :: Num
+        x = x0 + x * xStep;
+        y :: Num
+        y = y0 + yStep ;
+    in foldlT (layoutTree_aux x y) (Line (x0, y0) (x, y) : shapes) subtrees
+  end end
+;
+
+-- This is a bit unpleasant: the root has no incoming edge.
+
+layoutTree :: Tree -> Picture
+layoutTree t =
+  match designTreeW t with Node lx subtrees -> match lx with (l, x) ->
+    Canvas width height (foldlT (layoutTree_aux (width / 2) yStep) [] subtrees)
+  end end
+;
+
+----------------------------------------
+
+t1 :: Tree
+t1 = Node (1, 0) [Node (2, 0) [], Node (3, 0) []]
+;
+t3 :: Tree
+t3 = Node (1, 0) [ Node (2, 0) []
+                 , Node (3, 0) []
+                 , Node (4, 0) [ Node (5, 0) []
+                               , Node (6, 0) []
+                               , Node (7, 0) [ Node (9, 0) [Node (10, 0) []] ]
+                               , Node (8, 0) []]
+                 , Node (10, 0) [] ]
+;
+
+main = layoutTree t3

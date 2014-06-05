@@ -1,0 +1,63 @@
+-- Simple lambda-calculus evaluator.
+
+data Term = Var Num | Constant Num | Add Term Term | Lam Num Term | App Term Term
+
+data Value = Wrong | Number Num | Function (Value -> Value)
+
+add :: Value -> Value -> Value
+add xval yval =
+  match xval with
+      Number x ->
+        match yval with
+            Number y -> Number (x + y)
+          | dummy    -> Wrong
+      end
+    | dummy    -> Wrong
+  end
+;
+
+-- Look up a variable's value in an environment.
+lookup :: Num -> [(Num, Value)] -> Value
+lookup var env =
+  match env with
+      []   -> Wrong
+    | x:xs ->
+        match x with
+          (eVar, val) -> if eVar == var
+                           then val
+                           else lookup var xs
+                         end
+        end
+  end
+;
+
+-- Build a function value.
+mkFun :: Num -> Term -> [(Num, Value)] -> (Value -> Value)
+mkFun var body env val = eval body ((var, val) : env)
+;
+
+-- Apply a function value to another value.
+apply :: Value -> Value -> Value
+apply fv v =
+    match fv with
+        Function f -> f v
+      | dummy      -> Wrong
+    end
+;
+
+-- The evaluator takes a term and an environment (that maps
+-- variables into values) into values.
+eval :: Term -> [(Num, Value)] -> Value
+eval t env =
+  match t with
+      Var x      -> lookup x env
+    | Constant n -> Number n
+    | Add u v    -> add (eval u env) (eval v env)
+    | Lam x b    -> Function (mkFun x b env)
+    | App u v    -> apply (eval u env) (eval v env)
+  end
+;
+
+-- main = eval (Add (Constant 2) (Var 1)) [(1, Number 10)]
+-- main = eval (Add (Constant 2) (Var 1)) [(1, Wrong)]
+main = eval (App (Lam 1 (Var 2)) (Constant 1)) [(2, Number 765)]

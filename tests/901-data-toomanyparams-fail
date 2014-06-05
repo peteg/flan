@@ -1,0 +1,6 @@
+data Tree = Leaf | Node Num Tree Tree
+
+main =
+  match Leaf with
+    Node a b c d -> Leaf 2
+  end

@@ -1,0 +1,104 @@
+-- Logic puzzle from Abelson/Sussman, "Structure and Interpretation of Computer Programs".
+
+----------------------------------------
+
+-- Lists boilerplate.
+
+append :: [Num] -> [Num] -> [Num]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end
+;
+append2 :: [[Num]] -> [[Num]] -> [[Num]]
+append2 xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append2 xs ys)
+  end
+;
+
+distinct :: [Num] -> Bool
+distinct xxs =
+  match xxs with
+      []   -> True
+    | x:xs -> ! (elem x xs) && distinct xs
+  end
+;
+
+elem :: Num -> [Num] -> Bool
+elem x yys = match yys with [] -> False | y:ys -> if x == y then True else elem x ys end end
+;
+
+filter :: ([Num] -> Bool) -> [[Num]] -> [[Num]]
+filter p xxs =
+  match xxs with
+      []   -> []
+    | x:xs ->
+       match p x with
+           False -> filter p xs
+         | True  -> x : filter p xs
+       end
+  end
+;
+
+insert :: Num -> [Num] -> [Num] -> [[Num]]
+insert n acc xxs =
+  match xxs with
+      []   -> [append acc [n]]
+    | x:xs -> (append acc (n : xxs)) : (insert n (append acc [x]) xs)
+  end
+;
+
+insertInAllLists :: Num -> [[Num]] -> [[Num]]
+insertInAllLists n xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> append2 (insert n [] x) (insertInAllLists n xs)
+  end
+;
+
+permutations :: [Num] -> [[Num]]
+permutations set =
+  match set with
+      []   -> [[]]
+    | x:xs -> insertInAllLists x (permutations xs)
+  end
+;
+
+range :: Num -> Num -> [Num]
+range m n = if m <= n then m : range (m + 1) n else [] end
+;
+
+----------------------------------------
+
+-- Five schoolgirls sat for an examination. Their parents -- so they thought -- showed an
+-- undue degree of interest in the result. They therefore agreed that, in writing home about the
+-- examination, each girl should make one true statement and one untrue one. The following
+-- are the relevant passages from their letters:
+--      Betty: ``Kitty was second in the examination. I was only third.''
+--      Ethel: ``You'll be glad to hear that I was on top. Joan was second.''
+--      Joan: ``I was third, and poor old Ethel was bottom.''
+--      Kitty: ``I came out second. Mary was only fourth.''
+--      Mary: ``I was fourth. Top place was taken by Betty.''
+-- What in fact was the order in which the five girls were placed?
+
+p :: [Num] -> Bool
+p bejkmL =
+  match bejkmL with b:ejkmL -> match ejkmL with e:jkmL -> match jkmL with j:kmL ->
+  match kmL with k:mL -> match mL with m:l ->
+--      Betty: ``Kitty was second in the examination. I was only third.''
+     ((k == 2) != (b == 3))
+--      Ethel: ``You'll be glad to hear that I was on top. Joan was second.''
+  && ((e == 1) != (j == 2))
+--      Joan: ``I was third, and poor old Ethel was bottom.''
+  && ((j == 3) != (e == 5))
+--      Kitty: ``I came out second. Mary was only fourth.''
+  && ((k == 2) != (m == 4))
+--      Mary: ``I was fourth. Top place was taken by Betty.''
+  && ((m == 4) != (b == 1))
+  end end end end end
+;
+
+main = filter p (permutations (range 1 5))

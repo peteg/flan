@@ -1,0 +1,6 @@
+-- Euclid's algorithm.
+gcd :: Num -> Num -> Num
+gcd x y = if y == 0 then x else gcd y (x % y) end
+;
+
+main = gcd 3072 786
