@@ -7,21 +7,23 @@ simple types, user-defined algebraic datatypes, and strict and lazy
 evaluators. There is also a simpler first-order strict
 evaluator. There is no type inference or parametric polymorphism.
 
-John Shepherd <http://www.cse.unsw.edu.au/~jas/> commissioned this
-project and Peter Gammie <http://peteg.org/> executed it. It owes some
-inspiration to C/Java compiler first-year assignments dating back to
-1996. Andrew Taylor <http://www.cse.unsw.edu.au/~andrewt/> was
+[John Shepherd]<http://www.cse.unsw.edu.au/~jas/> commissioned this
+project and [Peter Gammie]<http://peteg.org/> executed it. It owes
+some inspiration to C/Java compiler first-year assignments dating back
+to 1996. [Andrew Taylor]<http://www.cse.unsw.edu.au/~andrewt/> was
 responsible for some of these.
 
 FLAN comes with FLANGE - the FLAN graphics engine, which is based on
 the functional geometry ideas originated by Peter Henderson. The
-system renders such pictures as SVG files.
+system renders potentially infinite (co-recursive) pictures as SVG
+files.
 
 Additionally there are many small tests that contain some classical
-functional programming techniques. Some were scraped from the GHC test
-suite, others from textbooks (Bird/Wadler, Thompson, ...) and
-functional pearls. Provenance and authorship should be clear for
-non-trivial examples; if it is not, please tell me.
+functional programming techniques. These were scraped from the
+[GHC]<http://www.haskell.org/ghc/> test suite, Prolog folklore,
+textbooks (Bird/Wadler, Thompson, ...)  and functional
+pearls. Provenance and authorship should be clear for non-trivial
+examples; if it is not, please tell me.
 
 ## Building
 
@@ -29,7 +31,8 @@ Dependencies:
 
 * A modern C compiler supporting at least C99. FLAN was developed
   using gcc-4.2 under Mac OS X 10.6 (and earlier), and some archaisms
-  remain.
+  remain. It has been tested using gcc-4.8.3 and clang-3.3 under
+  Debian.
 
 * perl, to generate the header file for the lexer.
 
