@@ -7,10 +7,10 @@ simple types, user-defined algebraic datatypes, and strict and lazy
 evaluators. There is also a simpler first-order strict
 evaluator. There is no type inference or parametric polymorphism.
 
-[John Shepherd]<http://www.cse.unsw.edu.au/~jas/> commissioned this
-project and [Peter Gammie]<http://peteg.org/> executed it. It owes
+[John Shepherd](http://www.cse.unsw.edu.au/~jas/) commissioned this
+project and [Peter Gammie](http://peteg.org/) executed it. It owes
 some inspiration to C/Java compiler first-year assignments dating back
-to 1996. [Andrew Taylor]<http://www.cse.unsw.edu.au/~andrewt/> was
+to 1996. [Andrew Taylor](http://www.cse.unsw.edu.au/~andrewt/) was
 responsible for some of these.
 
 FLAN comes with FLANGE - the FLAN graphics engine, which is based on
@@ -20,7 +20,7 @@ files.
 
 Additionally there are many small tests that contain some classical
 functional programming techniques. These were scraped from the
-[GHC]<http://www.haskell.org/ghc/> test suite, Prolog folklore,
+[GHC](http://www.haskell.org/ghc/) test suite, Prolog folklore,
 textbooks (Bird/Wadler, Thompson, ...)  and functional
 pearls. Provenance and authorship should be clear for non-trivial
 examples; if it is not, please tell me.
