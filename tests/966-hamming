@@ -1,0 +1,54 @@
+-- Hamming numbers, described by Dijkstra in his "A Discipline of Programming".
+-- Classic solution using laziness.
+
+foldr1 :: ([Num] -> [Num] -> [Num]) -> [[Num]] -> [Num]
+foldr1 f xyys =
+  match xyys with x:yys ->
+    match yys with
+        [] -> x
+      | y:ys -> f x (foldr1 f yys)
+    end
+  end
+;
+map :: (Num -> Num) -> [Num] -> [Num]
+map f =
+  let map_ :: [Num] -> [Num]
+      map_ xs = match xs with [] -> [] | x:xs -> f x : map_ xs end ;
+  in map_
+;
+mult :: Num -> Num -> Num
+mult x y = x * y
+;
+-- Non-standard merge: absorb duplicates.
+-- Merge two sorted lists into a sorted list.
+merge :: [Num] -> [Num] -> [Num]
+merge xxs yys =
+  match xxs with
+      []     -> yys
+    | x : xs ->
+        match yys with
+            []     -> xxs
+          | y : ys ->
+              if x == y then x : merge xs ys
+                 else if x < y then x : merge xs yys
+                   else y : merge xxs ys
+                 end
+              end
+         end
+  end
+;
+ham :: [Num]
+ham = 1 : foldr1 merge [map (mult 2) ham, map (mult 3) ham, map (mult 5) ham]
+;
+main = ham
+{-
+
+
+
+ham = 1 : foldr1 merge [mult 2 ham, mult 3 ham, mult 5 ham]
+      where
+      mult n x = [n*a|a<-x]
+      merge (a:x) (b:y) = a : merge x y,     if a=b
+                        = a : merge x (b:y), if a<b
+                        = b : merge (a:x) y, if a>b
+-}

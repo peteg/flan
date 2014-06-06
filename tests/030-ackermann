@@ -1,0 +1,15 @@
+-- Ackermann's function.
+-- The Miranda def by D. Turner is an advertisement for n+1 patterns:
+--
+-- ack 0 n = n+1
+-- ack (m+1) 0 = ack m 1
+-- ack (m+1) (n+1) = ack m (ack (m+1) n)
+-- ack m n = error "ack applied to -ve or fractional arg"
+
+ack :: Num -> Num -> Num
+ack m n =
+  if m == 0 then n+1
+    else ack (m - 1) (if n == 0 then 1 else ack m (n - 1) end)
+  end
+;
+main = ack 3 3 == 61
