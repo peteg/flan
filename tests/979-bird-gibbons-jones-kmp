@@ -1,0 +1,60 @@
+-- Richard S. Bird, Jeremy Gibbons, Geraint Jones: Formal Derivation
+-- of a Pattern Matching Algorithm. Sci. Comput. Program. 12(2):
+-- 93-104 (1989)
+
+-- Interesting as the conflict table is constructed lazily.
+-- ... but is this really KMP? - see Bird's more recent book.
+
+data Table
+  = Null
+  | Node [Num] Table Table
+
+-- List boilerplate
+hd :: [Num] -> Num
+hd xxs = match xxs with x : xs -> x end
+;
+tl :: [Num] -> [Num]
+tl xxs = match xxs with x : xs -> xs end
+;
+or :: [Bool] -> Bool
+or xs = match xs with
+    [] -> False
+  | x : xs -> x || or xs
+end
+;
+map :: (Table -> Bool) -> [Table] -> [Bool]
+map f xxs = match xxs with
+    [] -> []
+  | x : xs -> f x : map f xs
+  end
+;
+scanl :: (Table -> Num -> Table) -> Table -> [Num] -> [Table]
+scanl f e xxs = match xxs with
+    [] -> [e]
+  | x : xs -> e : scanl f (f e x) xs
+  end
+;
+
+kmp :: [Num] -> [Num] -> Bool
+kmp w s =
+  let
+    test :: Table -> Bool
+    test n = match n with Node z t u -> z == [] end ;
+
+    otimes :: Table -> Num -> Table
+    otimes n a = match n with
+        Null -> t0
+      | Node z t u -> if z != [] && a == hd z then u else otimes t a end
+      end ;
+
+    t0 :: Table
+    t0 = phi w Null ;
+
+    phi :: [Num] -> Table -> Table
+    phi z t = Node z t (phi (tl z) (otimes t (hd z))) ;
+
+   in or (map test (scanl otimes t0 s))
+;
+
+main = ! (kmp [0, 1] [1, 2, 3, 4, 5, 1, 0])
+    &&   (kmp [0, 1] [1, 2, 3, 0, 1, 4, 5])
