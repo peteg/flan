@@ -28,7 +28,7 @@ partition x yys =
       []   -> ([], [])
     | y:ys ->
         match partition x ys with
-	  (les, gs) ->
+          (les, gs) ->
             match y with (yVal, yPoint) ->
               if x < yVal then (les, y:gs) else (y:les, gs) end
             end
@@ -64,7 +64,7 @@ theta p1 p2 =
         t :: Num
         t = if dx == 0 && dy == 0 then 0 else dy / (abs dx + abs dy) end ;
     in 90.0 * (if dx < 0 then 2 - t else if dy < 0 then 4 + t else t end end)
- end end 
+ end end
 ;
 
 -- Taking the first point as an "anchor", compute the theta (approx

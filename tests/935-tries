@@ -1,7 +1,7 @@
 -- Tries: represent a set of strings as paths in a tree.
 -- Based on an old cs1011 exercise by Manuel Chakravarty.
 
-data Set = Node Bool [(Char, Set)] 
+data Set = Node Bool [(Char, Set)]
 
 data MSet = Just Set | Nothing
 
@@ -40,7 +40,7 @@ checkWord ccs d =
     end
   end
 ;
-    
+
 -- Add a new word to the set.
 
 addWord :: [Char] -> Set -> Set
