@@ -1,0 +1,28 @@
+-- A quine. We take this to be an expression that, when evaluated and
+-- printed, is identical to the source.
+-- http://rosettacode.org/wiki/Quine
+
+append :: [Char] -> [Char] -> [Char]
+append xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (append xs ys)
+  end;
+quote :: [Char] -> [Char]
+quote xs =
+  let quotec :: Char -> [Char] -> [Char]
+      quotec c rest = match c with
+          '\n' -> '\\' : 'n' : rest
+        | '\\' -> '\\' : '\\' : rest
+        | '"' -> '\\' : '"' : rest
+        | x -> x : rest
+        end;
+      aux :: [Char] -> [Char]
+      aux xs = match xs with
+          [] -> "\""
+        | x:xs -> quotec x (aux xs) end;
+   in '\"' : aux xs;
+main =
+  let q :: [Char] -> [Char]
+      q s = append s (quote s);
+   in q "-- A quine. We take this to be an expression that, when evaluated and\n-- printed, is identical to the source.\n-- http://rosettacode.org/wiki/Quine\n\nappend :: [Char] -> [Char] -> [Char]\nappend xxs ys =\n  match xxs with\n      []   -> ys\n    | x:xs -> x : (append xs ys)\n  end;\nquote :: [Char] -> [Char]\nquote xs =\n  let quotec :: Char -> [Char] -> [Char]\n      quotec c rest = match c with\n          '\\n' -> '\\\\' : 'n' : rest\n        | '\\\\' -> '\\\\' : '\\\\' : rest\n        | '\"' -> '\\\\' : '\"' : rest\n        | x -> x : rest\n        end;\n      aux :: [Char] -> [Char]\n      aux xs = match xs with\n          [] -> \"\\\"\"\n        | x:xs -> quotec x (aux xs) end;\n   in '\\\"' : aux xs;\nmain =\n  let q :: [Char] -> [Char]\n      q s = append s (quote s);\n   in q "

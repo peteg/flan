@@ -14,7 +14,7 @@ main = let x :: Num
            x = 5;
         in 4 * x
 
--- Two parses: 
+-- Two parses:
 -- main = (let x = 5 in 4) * x
 -- main = (let x = 5 in (4 * x))
 

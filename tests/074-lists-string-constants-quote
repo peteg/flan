@@ -1,0 +1,24 @@
+-- First hack at quoting.
+-- Works, but interacts a bit confusingly with the pretty printer.
+quote :: [Char] -> [Char]
+quote xs =
+  let quotec :: Char -> [Char] -> [Char]
+      quotec c rest = match c with
+          '\n' -> '\\' : 'n' : rest
+        | '\t' -> '\\' : 't' : rest
+        | '\'' -> '\\' : '\'' : rest
+        | x -> x : rest
+        end ;
+      aux :: [Char] -> [Char]
+      aux xs = match xs with
+        [] -> "]"
+      | x:xs -> ',' : ' ' : '\'' : quotec x ('\'' : aux xs)
+      end ;
+   in match xs with
+        [] -> []
+      | x:yys -> '[' : '\'' : quotec x ('\'' : (match yys with
+                   [] -> "]"
+                 | y:ys -> aux (y:ys) end))
+      end ;
+
+main = [quote "", quote "'", quote "\n", quote "x", quote "Hello, world!", quote "\tHello\n\tWorld!"]

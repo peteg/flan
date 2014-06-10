@@ -27,13 +27,8 @@
 /***********************************************************/
 /* Support functions. */
 
-/*
- * Allocates a new parse tree node.
- *
- *  - sets the type.
- *  - sets the line number.
- */
-static expr_t *alloc_expr_node(expr_type_t type)
+static expr_t *
+alloc_expr_node(expr_type_t type)
 {
   expr_t *new;
 
@@ -47,13 +42,8 @@ static expr_t *alloc_expr_node(expr_type_t type)
   return new;
 }
 
-/*
- * Allocates a new pattern node.
- *
- *  - sets the type.
- *  - sets the line number.
- */
-static pattern_t *alloc_pat(expr_type_t type)
+static pattern_t *
+alloc_pat(expr_type_t type)
 {
   pattern_t *new;
 
@@ -67,7 +57,8 @@ static pattern_t *alloc_pat(expr_type_t type)
   return new;
 }
 
-static binding_t *alloc_binding(char *name)
+static binding_t *
+alloc_binding(char *name)
 {
   binding_t *new;
 
@@ -81,7 +72,8 @@ static binding_t *alloc_binding(char *name)
   return new;
 }
 
-static clause_t *alloc_clause(pattern_t *pattern, expr_t *body)
+static clause_t *
+alloc_clause(pattern_t *pattern, expr_t *body)
 {
   clause_t *new;
 
@@ -95,7 +87,8 @@ static clause_t *alloc_clause(pattern_t *pattern, expr_t *body)
   return new;
 }
 
-static datacons_t *alloc_datacons(char *tag)
+static datacons_t *
+alloc_datacons(char *tag)
 {
   datacons_t *new;
 
@@ -104,6 +97,32 @@ static datacons_t *alloc_datacons(char *tag)
   }
 
   new->tag = tag;
+
+  return new;
+}
+
+/* Convert a string constant/literal into a list of char, for uniformity. */
+static expr_t *
+string_const(char *str)
+{
+  unsigned int i = strlen(str);
+  expr_t *new;
+
+  if(i == 0) {
+    new = alloc_expr_node(p_listempty);
+  } else {
+    list_t *exprs = list_empty();
+
+    /* Not the nicest way to build a list... */
+    while(i > 0) {
+      expr_t *list_val = alloc_expr_node(p_cconst);
+      char_val(list_val) = str[--i];
+      list_cons(list_val, exprs);
+    }
+
+    new = alloc_expr_node(p_listlit);
+    list_val(new) = exprs;
+  }
 
   return new;
 }
@@ -142,9 +161,8 @@ static expr_t *atomicExpr0(void)
       lex_expect(RSBRACKET, "atomicExpr0: expected ']'.\n");
       new = alloc_expr_node(p_listlit);
       list_val(new) = exprs;
-
-      break;
     }
+    break;
 
   case FALSE:
     new = alloc_expr_node(p_bconst);
@@ -167,6 +185,11 @@ static expr_t *atomicExpr0(void)
   case NUMCONST:
     new = alloc_expr_node(p_nconst);
     num_val(new) = yylval.numval;
+    lex();
+    break;
+
+  case STRINGCONST:
+    new = string_const(yylval.strval);
     lex();
     break;
 

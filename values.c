@@ -28,8 +28,6 @@ void toggle_tree_printer(void)
   tree_printer = !tree_printer;
 }
 
-/* For the top-level value, choose to either print it in prefix form
- * or as a tree. */
 void print_value(FILE *outf, value_t *v)
 {
   if(tree_printer) {
@@ -98,7 +96,8 @@ int print_env_value_i(char *name, void *data, FILE *outf)
   return 1;
 }
 
-static void print_datacons(FILE *outf, value_t *v)
+static void
+print_datacons(FILE *outf, value_t *v)
 {
   if(strcmp(datacons_tag(v), listEmptyTag) == 0) {
     /* Empty list */
@@ -122,7 +121,7 @@ static void print_datacons(FILE *outf, value_t *v)
         if(first) {
           first = 0;
         } else {
-          fprintf(outf, ", ");
+          fputs(", ", outf);
         }
         print_value_prefix(outf, list_head(datacons_params(v)));
         v = thunk_force(list_nth(datacons_params(v), 1));

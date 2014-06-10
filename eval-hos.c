@@ -99,13 +99,11 @@ static int e_match_pat_i(void *data, void *info)
     break;
 
   case p_var:
-    /* Matches anything. Bind it. */
     env_add_binding(pmc->env, var_name(c->pattern), pmc->val);
     pmc->match_body = c->body;
     break;
 
   case p_listcons:
-    /* Check the list contains at least one element, then bind variables. */
     if(pmc->val->type == v_datacons && strcmp(datacons_tag(pmc->val), listConsTag) == 0) {
       value_t *head;
       value_t *tail;
@@ -132,7 +130,6 @@ static int e_match_pat_i(void *data, void *info)
     break;
 
   case p_tuple:
-    /* Always matches (assuming the program type checks). Bind the variables. */
     list_zip_with(tuple_val(c->pattern),
                   tuple_val(pmc->val),
                   e_bind_params_i, pmc->env);
@@ -242,7 +239,7 @@ static value_t *e_fncall(env_t *env, expr_t *fn, list_t *args)
 
       if(nArgs < nParams) {
         /* Didn't get enough arguments, so wait for some more by
-         * building a new closure-like thing. */
+         * building a new closure. */
         value_t *fn_unsaturated = alloc_value(v_builtin_fn);
 
         builtin_num_params(fn_unsaturated) = nParams - nArgs;

@@ -30,26 +30,30 @@ static int yywrap();
 
 int yylex();
 
-static void print_lexeme(char *fn)
+static void
+print_lexeme(char *fn)
 {
-    if(output_lexemes) {
-        switch(yylval.lexeme) {
-        case CHARCONST:
-            printf("%s %d: lexeme: %d (CHARCONST)\n", fn, line_num, yylval.charval);
-            break;
-        case IDENTIFIER:
-            printf("%s %d: lexeme: \"%s\" (IDENTIFIER)\n", fn, line_num, yylval.strval);
-            break;
-        case NUM:
-            printf("%s %d: lexeme: %f (NUM)\n", fn, line_num, yylval.numval);
-            break;
-        case VARIABLE:
-            printf("%s %d: lexeme: \"%s\" (VARIABLE)\n", fn, line_num, yylval.strval);
-            break;
-        default:
-            printf("%s %d: lexeme: %s\n", fn, line_num, lex_toString(yylval.lexeme));
-        }
+  if(output_lexemes) {
+    switch(yylval.lexeme) {
+    case CHARCONST:
+      printf("%s %d: lexeme: %d (CHARCONST)\n", fn, line_num, yylval.charval);
+      break;
+    case IDENTIFIER:
+      printf("%s %d: lexeme: \"%s\" (IDENTIFIER)\n", fn, line_num, yylval.strval);
+      break;
+    case NUM:
+      printf("%s %d: lexeme: %f (NUM)\n", fn, line_num, yylval.numval);
+      break;
+    case STRINGCONST:
+      printf("%s %d: lexeme: \"%s\" (STRINGCONST)\n", fn, line_num, yylval.strval);
+      break;
+    case VARIABLE:
+      printf("%s %d: lexeme: \"%s\" (VARIABLE)\n", fn, line_num, yylval.strval);
+      break;
+    default:
+      printf("%s %d: lexeme: %s\n", fn, line_num, lex_toString(yylval.lexeme));
     }
+  }
 }
 
 void toggle_output_lexemes() {
@@ -156,26 +160,49 @@ static char escape_map[] = {'\0', '\"', '\'', '\\', '\b', '\f', '\n', '\r', '\t'
 
 #define ESCAPES_LENGTH (sizeof(escapes) / sizeof(char))
 
+static char
+char_escape(char ch)
+{
+  /* Linear search the escapes list. */
+  unsigned int i;
+
+  for(i = 0; i < ESCAPES_LENGTH && escapes[i] != ch; i++);
+
+  if(i >= ESCAPES_LENGTH) {
+    error("lexer/char_const: unknown escape: \"%s\".\n", yytext);
+  }
+
+  return escape_map[i];
+}
+
 /* Interpret a character constant. */
-static void char_const()
+static void
+char_const(void)
 {
 /*     fprintf(stderr, "got CHAR CONST %s.\n", yytext); */
 
-    if(yytext[1] == '\\') {
-        /* Linear search the escapes list. */
-        char ch = yytext[2];
-        unsigned int i;
+  if(yytext[1] == '\\') {
+    yylval.charval = char_escape(yytext[2]);
+  } else {
+    yylval.charval = yytext[1];
+  }
+}
 
-        for(i = 0; i < ESCAPES_LENGTH && escapes[i] != ch; i++);
-
-        if(i >= ESCAPES_LENGTH) {
-            error("lexer/char_const: unknown escape: \"%s\".\n", yytext);
-        }
-
-        yylval.charval = escape_map[i];
+static void
+string_const(void)
+{
+  /* Expand escapes. Useful property: makes the string shorter. */
+  unsigned int j = 0;
+  for(unsigned int i = 1; yytext[i] != '"'; i++) {
+    if(yytext[i] == '\\') {
+      yytext[j++] = char_escape(yytext[++i]);
     } else {
-        yylval.charval = yytext[1];
+      yytext[j++] = yytext[i];
     }
+  }
+  yytext[j] = '\0';
+
+  yylval.strval = yytext;
 }
 
 %}
@@ -252,8 +279,9 @@ static void char_const()
 <INITIAL>'(\\.|[^\\'])'                 { char_const(); return(CHARCONST); }
 
 <INITIAL>[0-9]+(\.[0-9]+)?		{ yylval.numval = atof(yytext); return(NUMCONST); }
-<INITIAL>[A-Z][A-Za-z0-9_]*		{ yylval.strval = (char *)yytext; return(IDENTIFIER); }
-<INITIAL>[a-z][A-Za-z0-9_]*		{ yylval.strval = (char *)yytext; return(VARIABLE); }
+<INITIAL>[A-Z][A-Za-z0-9_]*		{ yylval.strval = yytext; return(IDENTIFIER); }
+<INITIAL>[a-z][A-Za-z0-9_]*		{ yylval.strval = yytext; return(VARIABLE); }
+<INITIAL>\"(\\.|[^\\"])*\"		{ count(); string_const(); return(STRINGCONST); }
 
 .                                       { error( "lexer: line %d: unrecognized lexeme starting with character \"%s\".\n", line_num, yytext); }
 

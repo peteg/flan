@@ -1,0 +1,8 @@
+id :: [Char] -> [Char]
+id xs =
+  match xs with
+    [] -> []
+  | x:xs -> x : id xs
+end ;
+
+main = id "\nHello, world!\n"
