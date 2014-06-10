@@ -24,12 +24,12 @@ Type             = AtomicType FnType
 FnType           = "->" Type | EMPTY
 AtomicType       = "Bool" | "Char" | "Num"
                  | Identifier -- User defined type.
-      	  	 | "[" Type "]"
-      	  	 | "(" TypeList ")" -- Identify a parenthesised single type with that type.
+                 | "[" Type "]"
+                 | "(" TypeList ")" -- Identify a parenthesised single type with that type.
 
 Bindings         = Binding Bindings | EMPTY
 Binding          = Variable "::" Type
-		   Variable Variables = Expression ";"
+                   Variable Variables = Expression ";"
 
 Variable         = lower-case letter followed by alphanumerics and "_"
 Variables        = Variable Variables | EMPTY
@@ -106,6 +106,7 @@ Identifier       = upper-case letter followed by alphanumerics and "_"
 Num              = string of numerals, '0' .. '9', optionally "." and more numerals
 String           = double quote Chars double quote -- Lists of characters
 Constant         = "[]"
-	 	 | "True" | "False"
- 		 | "'" Char "'"
-		 | Num
+                 | "True" | "False"
+                 | "'" Char "'"
+                 | Num
+                 | String

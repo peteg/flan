@@ -1,16 +1,17 @@
 # FLAN: a functional language
 
-FLAN is a toy functional language realised as an interpreter written
-in C. It was intended to be a vehicle for assignments for first year
-students at CSE, UNSW circa 2008. It supports higher-order functions,
-simple types, user-defined algebraic datatypes, and strict and lazy
-evaluators. There is also a simpler first-order strict
+FLAN is a toy functional language realised as a series of evaluators
+written in C. It supports higher-order functions, simple types,
+user-defined algebraic datatypes, and strict and lazy
+evaluation. There is also a simpler first-order strict
 evaluator. There is no type inference or parametric polymorphism.
 
-[John Shepherd](http://www.cse.unsw.edu.au/~jas/) commissioned this
-project and [Peter Gammie](http://peteg.org/) executed it. It owes
-some inspiration to C/Java compiler first-year assignments dating back
-to 1996. [Andrew Taylor](http://www.cse.unsw.edu.au/~andrewt/) was
+It was intended to be a vehicle for assignments for first year
+students at CSE, UNSW circa 2008. [John
+Shepherd](http://www.cse.unsw.edu.au/~jas/) commissioned this project
+and [Peter Gammie](http://peteg.org/) executed it. It owes some
+inspiration to C/Java compiler first-year assignments dating back to
+1996. [Andrew Taylor](http://www.cse.unsw.edu.au/~andrewt/) was
 responsible for some of these.
 
 FLAN comes with FLANGE - the FLAN graphics engine, which is based on
@@ -57,16 +58,16 @@ $ flan --help
 
 Suffix "-fail" means the test should be flagged as an error.
 
-0 - basic syntax
-1 - simple functions over Int, tuples
-2 - simple functions over lists
-3 - types, type errors
-4 - higher-order functions (that work with strict eval)
-5 - scoping (turn the type checker off)
-6 - serious list algorithms
-7 - graphs
-8 - long programs (that work with strict eval)
-9 - laziness, user-defined types, ...
+* 0 - basic syntax
+* 1 - simple functions over Int, tuples
+* 2 - simple functions over lists
+* 3 - types, type errors
+* 4 - higher-order functions (that work with strict eval)
+* 5 - scoping (turn the type checker off)
+* 6 - serious list algorithms
+* 7 - graphs
+* 8 - long programs (that work with strict eval)
+* 9 - laziness, user-defined types, ...
 
 ## Ideas for further development
 
