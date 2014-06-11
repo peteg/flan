@@ -1,0 +1,31 @@
+-- Infinite stream of fibonacci numbers, lazily-defined.
+-- David Turner, "The Semantic Elegance of Applicative Languages", FLCA 1981.
+-- An antecdent to memoisation using corecursive structures (Altenkirch, Gill/Hutton)
+
+map :: (Num -> Num) -> [Num] -> [Num]
+map f xxs =
+  match xxs with
+      []   -> []
+    | x:xs -> f x : map f xs
+  end
+;
+toInfinity :: Num -> [Num]
+toInfinity n = n : toInfinity (n + 1)
+;
+nth :: [Num] -> Num -> Num
+nth xxs n =
+  if n == 0
+    then match xxs with x:xs -> x end
+    else nth (match xxs with x:xs -> xs end) (n-1)
+  end
+;
+main =
+  let fiblist :: [Num]
+      fiblist = map fib (toInfinity 0) ;
+      fib :: Num -> Num
+      fib n =
+        if n == 0 then 1
+                  else if n == 1 then 1
+                                  else nth fiblist (n - 1) + nth fiblist (n - 2)
+        end end ;
+  in fib 12
