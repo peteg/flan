@@ -319,7 +319,7 @@ static void f_render(render_t *r, value_t *v)
   switch(v->type) {
   default:
   case v_unused:
-    error("flange: internal error: expected to get data constructors.\n");
+    error("flange: Expected 'main' to be bound to an expression of type 'Picture'.\n");
     break;
 
   case v_datacons:
@@ -354,7 +354,7 @@ flange_render(int type_check, graphics_t *g, program_t *program,
 {
   list_t *fts = flange_types();
   env_t *env = flange_bindings();
-  type_t *type_of_main;
+  type_t *type_of_main = NULL;
   render_t r;
   double width = 600, height = 600; /* FIXME */
 
@@ -379,8 +379,9 @@ flange_render(int type_check, graphics_t *g, program_t *program,
   r.left.y = height;
 
   /* Draw the picture. */
-  if(type_of_main->type == t_user_defined
-     && strcmp(user_def_use_name(type_of_main), "Picture") == 0) {
+  if( type_of_main == NULL
+      || (type_of_main->type == t_user_defined
+          && strcmp(user_def_use_name(type_of_main), "Picture") == 0) ) {
     graphics_picture_start(g, (int)width, (int)height);
     f_render(&r, evaluate_program(env, program));
     graphics_picture_end(g);

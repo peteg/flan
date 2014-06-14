@@ -42,7 +42,7 @@ dragon_axiom = "X"
 ;
 
 ----------------------------------------
--- Fractal plant
+-- Fractal plant.
 
 fplant_drawing_rules :: [(Char, Action)]
 fplant_drawing_rules =
@@ -217,8 +217,8 @@ turtle =
           | Right angle -> aux pen pos (normalise_angle (orientation + angle)) stack acts
           | Forward steps -> match pos with (x, y) ->
               let new_pos :: (Num, Num)
-                  new_pos = (x + steps * sin orientation,
-                             y + steps * cos orientation) ;
+                  new_pos = ( x + steps * sin orientation
+                            , y + steps * cos orientation ) ;
                in Line pos new_pos : (aux pen new_pos orientation stack acts) end -- FIXME consider pen
           | Down -> aux True pos orientation stack acts
           | Up -> aux False pos orientation stack acts
