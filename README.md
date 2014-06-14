@@ -73,27 +73,34 @@ Suffix "-fail" means the test should be flagged as an error.
 
 ### FLAN
 
-* Accurate garbage collection.
-
+* Accurate garbage collection
 * REPL
-
 * Types: parametric polymorphism
-
-* More built-in functions: trigonometry, ...
+* More built-in functions
+* Nested comments
+* Allow primes in identifiers
+* Add input and output (caveat: laziness)
 
 ### FLANGE
 
-* [L-systems](http://en.wikipedia.org/wiki/L-system), probably eased
-  by implementing turtle graphics first.
- * Koch curve
- * Dragon curve
-
 * Compile FLANGE images to SVG and JavaScript, allowing zooming of
   (co-)recursive images and animations (= lazy list of FLANGE images).
-
 * Colours.
-
 * Text.
+
+### Examples
+
+* Dijkstra et al shortest paths
+* Kruskal / Prim spanning-trees
+* Continuations, such as backtracking ala Hutton et al
+* Logic programming
+* enumerate the digits of e
+* Minimax ala Bird/Hughes
+* "Seemingly impossible" functional programs ala Escardo
+* DLPP (etc) SAT algorithm
+* [Rosetta Code programming tasks]{http://rosettacode.org/wiki/Category:Programming_Tasks}
+* [Bernie]{http://www.berniepope.id.au/}: interpreter for an imperative language
+* Functional arrays / priority queues ala Okasaki/Paulson
 
 ## Bugs and infelicities
 
@@ -120,3 +127,5 @@ Possibly quite stale.
 * Type checker should take evaluator scope into account.
  * e.g. constants are not in-scope in their own definitions in strict
    evaluators.
+
+* ./flan -lflange/920-turtle
