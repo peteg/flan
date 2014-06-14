@@ -1,7 +1,7 @@
 /*
  * Various utility functions without obvious homes.
  *
- * Peter Gammie, peteg@cse.unsw.edu.au
+ * Peter Gammie, peteg42@gmail.com
  * Commenced 21/08/01.
  */
 
@@ -12,6 +12,11 @@
 
 #define UNUSED(x) (void)(x)
 extern volatile void *null_ptr;
+
+/* Apparently M_PI got dropped from math.h in C99. */
+#ifndef M_PI
+#define M_PI           3.14159265358979323846  /* pi */
+#endif
 
 /* strdup is not in the C standards... */
 char *strdup(const char *s);

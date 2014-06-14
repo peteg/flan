@@ -1,7 +1,7 @@
 /*
  * Types, type checking.
  *
- * Peter Gammie, peteg@cse.unsw.edu.au
+ * Peter Gammie, peteg42@gmail.com
  * Commenced 22/08/01 (SimpleC).
  * Redone for FLAN July 2008.
  */
@@ -17,6 +17,6 @@
 type_t *alloc_type(type_type_t type);
 
 /* Typecheck a program. Returns 0 on failure. */
-int types_check(program_t *program);
+type_t *types_check(program_t *program);
 
 #endif /* _TYPES_H_ */

@@ -3,7 +3,7 @@
  *
  * Outputs SVG to a file.
  *
- * Peter Gammie, peteg@cse.unsw.edu.au
+ * Peter Gammie, peteg42@gmail.com
  * Commenced August 2008.
  *
  */
@@ -14,11 +14,6 @@
 
 #include "graphics.h"
 #include "util.h"
-
-/* Apparently M_PI got dropped from math.h in C99. */
-#ifndef M_PI
-#define M_PI           3.14159265358979323846  /* pi */
-#endif
 
 struct graphics {
   FILE *outf;

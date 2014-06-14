@@ -1,7 +1,7 @@
 /*
  * The Pretty Printer.
  *
- * Peter Gammie, peteg@cse.unsw.edu.au
+ * Peter Gammie, peteg42@gmail.com
  * Commenced 22/08/01 (SimpleC).
  * Redone for FLAN July 2008.
  *
@@ -459,7 +459,7 @@ void pp_expr(FILE *outf, expr_t *expr, int level)
     pp_match(outf, expr, level);
     break;
   case p_mod:
-    pp_binaryop(outf, expr, level, "%%");
+    pp_binaryop(outf, expr, level, "%");
     break;
   case p_mul:
     pp_binaryop(outf, expr, level, "*");

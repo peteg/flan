@@ -1,9 +1,11 @@
 /*
  * Builtin functions.
  *
- * Peter Gammie, peteg@cse.unsw.edu.au
+ * Peter Gammie, peteg42@gmail.com
  * Commenced July 2008.
  */
+
+#include <math.h>
 
 #include "builtins.h"
 #include "environment.h"
@@ -11,6 +13,7 @@
 #include "parser.h"
 #include "symbols.h"
 #include "types.h"
+#include "util.h"
 #include "values.h"
 
 /* The list data constructors. */
@@ -52,7 +55,8 @@ symboltable_t *initial_type_environment(list_t *extraTypes)
  * implemented in FLan as it does not use twos-complement arithmetic.
  * http://en.wikipedia.org/wiki/Linear_congruential_generator
  */
-static value_t *flan_random_fn(list_t *args)
+static value_t *
+flan_random_fn(list_t *args)
 {
   value_t *seed = (value_t *)thunk_force(list_head(args));
 
@@ -71,7 +75,39 @@ static value_t *flan_random_fn(list_t *args)
   return result;
 }
 
-env_t *builtin_bindings(void)
+/* FLAN's sin and cos operate in degrees. */
+static value_t *
+flan_cos_fn(list_t *args)
+{
+  value_t *x = (value_t *)thunk_force(list_head(args));
+  value_t *result = alloc_value(v_num);
+  num_val(result) = cos(num_val(x) * M_PI / 180);
+
+  return result;
+}
+
+static value_t *
+flan_sin_fn(list_t *args)
+{
+  value_t *x = (value_t *)thunk_force(list_head(args));
+  value_t *result = alloc_value(v_num);
+  num_val(result) = sin(num_val(x) * M_PI / 180);
+
+  return result;
+}
+
+static value_t *
+flan_tan_fn(list_t *args)
+{
+  value_t *x = (value_t *)thunk_force(list_head(args));
+  value_t *result = alloc_value(v_num);
+  num_val(result) = tan(num_val(x));
+
+  return result;
+}
+
+env_t *
+builtin_bindings(void)
 {
   env_t *env;
   value_t *v;
@@ -83,6 +119,24 @@ env_t *builtin_bindings(void)
   builtin_args(v) = list_empty();
   builtin_fn(v) = flan_random_fn;
   env_add_binding(env, "random", v);
+
+  v = alloc_value(v_builtin_fn);
+  builtin_num_params(v) = 1;
+  builtin_args(v) = list_empty();
+  builtin_fn(v) = flan_cos_fn;
+  env_add_binding(env, "cos", v);
+
+  v = alloc_value(v_builtin_fn);
+  builtin_num_params(v) = 1;
+  builtin_args(v) = list_empty();
+  builtin_fn(v) = flan_sin_fn;
+  env_add_binding(env, "sin", v);
+
+  v = alloc_value(v_builtin_fn);
+  builtin_num_params(v) = 1;
+  builtin_args(v) = list_empty();
+  builtin_fn(v) = flan_tan_fn;
+  env_add_binding(env, "tan", v);
 
   return env;
 }
@@ -98,6 +152,9 @@ env_t *builtin_bindings_types(void)
   fn_arg_type(t) = &numT;
   fn_ret_type(t) = &numT;
   env_add_binding(env, "random", t);
+  env_add_binding(env, "cos", t);
+  env_add_binding(env, "sin", t);
+  env_add_binding(env, "tan", t);
 
   return env;
 }

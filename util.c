@@ -1,7 +1,7 @@
 /*
  * Various utility functions without obvious homes.
  *
- * Peter Gammie, peteg@cse.unsw.edu.au
+ * Peter Gammie, peteg42@gmail.com
  * Commenced 21/08/01.
  */
 

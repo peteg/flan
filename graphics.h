@@ -1,7 +1,7 @@
 /*
  * Simple 2D graphics API.
  *
- * Peter Gammie, peteg@cse.unsw.edu.au
+ * Peter Gammie, peteg42@gmail.com
  * Commenced August 2008.
  *
  */

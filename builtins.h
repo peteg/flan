@@ -1,7 +1,7 @@
 /*
  * Builtin functions.
  *
- * Peter Gammie, peteg@cse.unsw.edu.au
+ * Peter Gammie, peteg42@gmail.com
  * Commenced July 2008.
  */
 

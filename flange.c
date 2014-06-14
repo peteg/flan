@@ -21,7 +21,7 @@
  * There is also some information in Abelson and Sussman's "Structure
  * and Interpretation of Computer Programs".
  *
- * Peter Gammie, peteg@cse.unsw.edu.au
+ * Peter Gammie, peteg42@gmail.com
  * Commenced August 2008.
  *
  */
@@ -319,7 +319,7 @@ static void f_render(render_t *r, value_t *v)
   switch(v->type) {
   default:
   case v_unused:
-    error("flange: Expected 'main' to be bound to an expression of type 'Picture'.\n");
+    error("flange: internal error: expected to get data constructors.\n");
     break;
 
   case v_datacons:
@@ -348,18 +348,20 @@ static void f_render(render_t *r, value_t *v)
 /****************************************/
 /* Top-level: render a FLANGE picture. */
 
-void flange_render(int type_check, graphics_t *g, program_t *program,
-                   value_t *(*evaluate_program)(env_t *env, program_t *program))
+void
+flange_render(int type_check, graphics_t *g, program_t *program,
+              value_t *(*evaluate_program)(env_t *env, program_t *program))
 {
   list_t *fts = flange_types();
   env_t *env = flange_bindings();
+  type_t *type_of_main;
   render_t r;
   double width = 600, height = 600; /* FIXME */
 
   /* Append the FLANGE-specific types. */
   list_append(&program->types, &fts);
 
-  if(type_check && !types_check(program)) {
+  if(type_check && !(type_of_main = types_check(program))) {
     fprintf(stdout, " ** Aborting on type error.\n");
     exit(1);
   }
@@ -376,8 +378,14 @@ void flange_render(int type_check, graphics_t *g, program_t *program,
   r.left.x = 0;
   r.left.y = height;
 
-  /* Draw a picture. */
-  graphics_picture_start(g, (int)width, (int)height);
-  f_render(&r, evaluate_program(env, program));
-  graphics_picture_end(g);
+  /* Draw the picture. */
+  if(type_of_main->type == t_user_defined
+     && strcmp(user_def_use_name(type_of_main), "Picture") == 0) {
+    graphics_picture_start(g, (int)width, (int)height);
+    f_render(&r, evaluate_program(env, program));
+    graphics_picture_end(g);
+  } else {
+    print_value(stdout, evaluate_program(builtin_bindings(), program));
+    fprintf(stdout, "\n");
+  }
 }

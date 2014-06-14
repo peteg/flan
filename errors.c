@@ -1,7 +1,7 @@
 /*
  * The Error Reporting library.
  *
- * Peter Gammie, peteg@cse.unsw.edu.au
+ * Peter Gammie, peteg42@gmail.com
  * Commenced 21/08/01.
  */
 

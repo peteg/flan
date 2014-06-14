@@ -1,7 +1,7 @@
 /*
  * Types, type checking.
  *
- * Peter Gammie, peteg@cse.unsw.edu.au
+ * Peter Gammie, peteg42@gmail.com
  * Commenced 22/08/01 (SimpleC).
  * Redone for FLAN August 2008.
  *
@@ -858,9 +858,11 @@ static void verify_user_types(env_t *env, list_t *types)
 
 /****************************************/
 
-int types_check(program_t *program)
+type_t *
+types_check(program_t *program)
 {
   env_t *env;
+  type_t *type_of_main;
 
   /* Create the initial global type map. */
   typeMap = initial_type_environment(program->types);
@@ -876,7 +878,7 @@ int types_check(program_t *program)
   tc_bindings(env, program->bindings);
 
   /* Check the 'main' expression. */
-  tc_expr(env, program->main);
+  type_of_main = tc_expr(env, program->main);
 
-  return errors == 0;
+  return errors == 0 ? type_of_main : NULL;
 }

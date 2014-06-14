@@ -1,0 +1,333 @@
+-- L-Systems. Thanks to Bernie Pope for his python script.
+-- Also Turtle graphics ala Logo.
+
+data Action
+  = Left Num
+  | Right Num
+  | Forward Num
+  | Down | Up
+  | Push | Pop
+  | Goto (Num, Num)
+
+data MaybeAction = NothingA | JustA Action
+data MaybeCharList = NothingC | JustC [Char]
+
+-- FIXME magic constants
+width :: Num
+width = 300
+;
+height :: Num
+height = 300
+;
+
+----------------------------------------
+-- Dragon curve.
+
+dragon_drawing_rules :: [(Char, Action)]
+dragon_drawing_rules =
+ [ ('F', Forward 5)
+ , ('-', Left  90)
+ , ('+', Right 90) ]
+;
+dragon_rules :: [(Char, [Char])]
+dragon_rules =
+ [ ('X', "X+YF")
+ , ('Y', "FX-Y") ]
+;
+dragon_limit :: Num
+dragon_limit = 10
+;
+dragon_axiom :: [Char]
+dragon_axiom = "X"
+;
+
+----------------------------------------
+-- Fractal plant
+
+fplant_drawing_rules :: [(Char, Action)]
+fplant_drawing_rules =
+ [ ('F', Forward 2)
+ , ('-', Left  25)
+ , ('+', Right 25)
+ , ('[', Push)
+ , (']', Pop) ]
+;
+fplant_rules :: [(Char, [Char])]
+fplant_rules =
+  [ ('X', "F-[[X]+X]+F[+FX]-X")
+  , ('F', "FF") ]
+;
+fplant_limit :: Num
+fplant_limit = 5
+;
+fplant_axiom :: [Char]
+fplant_axiom = "X"
+;
+
+----------------------------------------
+-- Koch curve.
+
+koch_drawing_rules :: [(Char, Action)]
+koch_drawing_rules =
+ [ ('F', Forward 5)
+ , ('-', Left  90)
+ , ('+', Right 90) ]
+;
+koch_rules :: [(Char, [Char])]
+koch_rules = [ ('F', "F+F-F-F+F") ]
+;
+koch_limit :: Num
+koch_limit = 3
+;
+koch_axiom :: [Char]
+koch_axiom = "F"
+;
+
+----------------------------------------
+-- Koch snowflake.
+
+koch_snowflake_drawing_rules :: [(Char, Action)]
+koch_snowflake_drawing_rules =
+ [ ('F', Forward 1)
+ , ('-', Left  60)
+ , ('+', Right 60) ]
+;
+koch_snowflake_rules :: [(Char, [Char])]
+koch_snowflake_rules =
+  [ ('F', "F-F++F-F")
+  , ('X', "FF") ]
+;
+koch_snowflake_limit :: Num
+koch_snowflake_limit = 4
+;
+koch_snowflake_axiom :: [Char]
+koch_snowflake_axiom = "F++F++F"
+;
+
+----------------------------------------
+-- Peano-Gosper
+
+peano_gosper_drawing_rules :: [(Char, Action)]
+peano_gosper_drawing_rules =
+ [ ('F', Forward 2)
+ , ('-', Left  60)
+ , ('+', Right 60) ]
+;
+peano_gosper_rules :: [(Char, [Char])]
+peano_gosper_rules =
+  [ ('X', "X+YF++YF-FX--FXFX-YF+")
+  , ('Y', "-FX+YFYF++YF+FX--FX-Y") ]
+;
+peano_gosper_limit :: Num
+peano_gosper_limit = 4
+;
+peano_gosper_axiom :: [Char]
+peano_gosper_axiom = "X"
+;
+
+----------------------------------------
+-- Penrose tiling.
+-- Many sources; don't know the original.
+
+penrose_tiling_drawing_rules :: [(Char, Action)]
+penrose_tiling_drawing_rules =
+ [ ('1', Forward 10)
+ , ('-', Left  36)
+ , ('+', Right 36)
+ , ('[', Push)
+ , (']', Pop) ]
+;
+penrose_tiling_rules :: [(Char, [Char])]
+penrose_tiling_rules =
+  [ ('6', "81++91----71[-81----61]++")
+  , ('7', "+81--91[---61--71]+")
+  , ('8', "-61++71[+++81++91]-")
+  , ('9', "--81++++61[+91++++71]--71")
+  , ('1', "") ]
+;
+penrose_tiling_limit :: Num
+penrose_tiling_limit = 5
+;
+penrose_tiling_axiom :: [Char]
+penrose_tiling_axiom = "[7]++[7]++[7]++[7]++[7]"
+;
+
+----------------------------------------
+-- Plus-square.
+-- http://www.kevs3d.co.uk/dev/lsystems/
+
+plus_square_drawing_rules :: [(Char, Action)]
+plus_square_drawing_rules =
+ [ ('F', Forward 2)
+ , ('-', Left  90)
+ , ('+', Right 90) ]
+;
+plus_square_rules :: [(Char, [Char])]
+plus_square_rules =
+  [ ('X', "FX+FX+FXFY-FY-")
+  , ('Y', "+FX+FXFY-FY-FY")
+  , ('F', "") ]
+;
+plus_square_limit :: Num
+plus_square_limit = 3
+;
+plus_square_axiom :: [Char]
+plus_square_axiom = "XYXYXYX+XYXYXYX+XYXYXYX+XYXYXYX"
+;
+
+----------------------------------------
+-- Sierpinski gadget.
+
+sierpinski_drawing_rules :: [(Char, Action)]
+sierpinski_drawing_rules =
+ [ ('A', Forward 2)
+ , ('B', Forward 2)
+ , ('-', Left  60)
+ , ('+', Right 60) ]
+;
+sierpinski_rules :: [(Char, [Char])]
+sierpinski_rules =
+ [ ('A', "B-A-B")
+ , ('B', "A+B+A") ]
+;
+sierpinski_limit :: Num
+sierpinski_limit = 6
+;
+sierpinski_axiom :: [Char]
+sierpinski_axiom = "A"
+;
+
+----------------------------------------
+-- Turtle interpreter
+
+turtle :: [Action] -> [Shape]
+turtle =
+  let normalise_angle :: Num -> Num
+      normalise_angle x =
+        if x >= 0 then x % 360
+                  else 360 - ((0 - x) % 360) end ;
+
+      aux :: Bool -> (Num, Num) -> Num -> [((Num, Num), Num)]
+          -> [Action]
+          -> [Shape]
+      aux pen pos orientation stack acts = match acts with
+          [] -> []
+        | a : acts -> match a with
+            Left angle  -> aux pen pos (normalise_angle (orientation - angle)) stack acts
+          | Right angle -> aux pen pos (normalise_angle (orientation + angle)) stack acts
+          | Forward steps -> match pos with (x, y) ->
+              let new_pos :: (Num, Num)
+                  new_pos = (x + steps * sin orientation,
+                             y + steps * cos orientation) ;
+               in Line pos new_pos : (aux pen new_pos orientation stack acts) end -- FIXME consider pen
+          | Down -> aux True pos orientation stack acts
+          | Up -> aux False pos orientation stack acts
+          | Push -> aux pen pos orientation ((pos, orientation) : stack) acts
+          | Pop -> match stack with x:stack -> match x with (pos, orientation) ->
+                     aux pen pos orientation stack acts end end
+          | Goto pos -> aux pen pos orientation stack acts -- FIXME draw?
+          end end ;
+  in aux True (width / 2, height / 2) 0 []
+;
+
+----------------------------------------
+-- L-System interpreter
+-- FIXME polymorphism would be nice.
+
+appendCharList :: [Char] -> [Char] -> [Char]
+appendCharList xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (appendCharList xs ys)
+  end
+;
+lookupCharList :: Char -> [(Char, [Char])] -> MaybeCharList
+lookupCharList key kvs = match kvs with
+    [] -> NothingC
+  | kv : kvs -> match kv with (k, v) -> if k == key then JustC v else lookupCharList key kvs end
+end end
+;
+appendActionList :: [Action] -> [Action] -> [Action]
+appendActionList xxs ys =
+  match xxs with
+      []   -> ys
+    | x:xs -> x : (appendActionList xs ys)
+  end
+;
+lookupAction :: Char -> [(Char, Action)] -> MaybeAction
+lookupAction key kvs = match kvs with
+    [] -> NothingA
+  | kv : kvs -> match kv with (k, v) -> if k == key then JustA v else lookupAction key kvs end
+end end
+;
+
+iterate_rules :: [(Char, [Char])] -> [Char] -> Num -> [Char]
+iterate_rules rules =
+  let rewrite :: [Char] -> [Char]
+      rewrite str = match str with
+          [] -> ""
+        | x:xs -> match lookupCharList x rules with
+              NothingC -> x : rewrite xs
+            | JustC y -> appendCharList y (rewrite xs)
+            end
+        end ;
+       iterate :: [Char] -> Num -> [Char]
+       iterate str n = if n <= 0 then str else iterate (rewrite str) (n - 1) end ;
+   in iterate
+;
+
+draw :: [(Char, Action)] -> [Char] -> [Action]
+draw drawing_rules str = match str with
+    [] -> []
+  | x:xs -> match lookupAction x drawing_rules with
+        NothingA -> draw drawing_rules xs
+      | JustA action -> action : draw drawing_rules xs
+end end
+;
+
+lsystem :: [(Char, [Char])] -> [(Char, Action)] -> [Char] -> Num -> Picture
+lsystem rules drawing_rules axiom n =
+  Canvas width height (turtle (draw drawing_rules (iterate_rules rules axiom n)))
+;
+
+----------------------------------------
+-- Top level.
+
+-- Combinators.
+nonet :: Picture -> Picture -> Picture -> Picture -> Picture -> Picture -> Picture -> Picture -> Picture -> Picture
+nonet p1 p2 p3
+      p4 p5 p6
+      p7 p8 p9 =
+  Above 1 2 (Beside 1 2 p1 (Beside 1 1 p2 p3))
+            (Above 1 1 (Beside 1 2 p4 (Beside 1 1 p5 p6))
+                       (Beside 1 2 p7 (Beside 1 1 p8 p9)))
+;
+
+main =
+  let dragon :: Picture
+      dragon = lsystem dragon_rules dragon_drawing_rules dragon_axiom dragon_limit ;
+
+      fplant :: Picture
+      fplant = lsystem fplant_rules fplant_drawing_rules fplant_axiom fplant_limit ;
+
+      koch :: Picture
+      koch = lsystem koch_rules koch_drawing_rules koch_axiom koch_limit ;
+
+      koch_snowflake :: Picture
+      koch_snowflake = lsystem koch_snowflake_rules koch_snowflake_drawing_rules koch_snowflake_axiom koch_snowflake_limit ;
+
+      peano_gosper :: Picture
+      peano_gosper = lsystem peano_gosper_rules peano_gosper_drawing_rules peano_gosper_axiom peano_gosper_limit ;
+
+      penrose_tiling :: Picture
+      penrose_tiling = lsystem penrose_tiling_rules penrose_tiling_drawing_rules penrose_tiling_axiom penrose_tiling_limit ;
+
+      plus_square :: Picture
+      plus_square = lsystem plus_square_rules plus_square_drawing_rules plus_square_axiom plus_square_limit ;
+
+      sierpinski :: Picture
+      sierpinski = lsystem sierpinski_rules sierpinski_drawing_rules sierpinski_axiom sierpinski_limit ;
+
+   in nonet sierpinski   Empty          koch_snowflake
+            fplant       penrose_tiling plus_square
+            peano_gosper dragon         koch

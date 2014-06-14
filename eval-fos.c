@@ -12,7 +12,7 @@
  * Note this evaluator is just to show the baseline functionality I
  * expect everyone can implement.
  *
- * Peter Gammie, peteg@cse.unsw.edu.au
+ * Peter Gammie, peteg42@gmail.com
  * Commenced July 2008.
  *
  */

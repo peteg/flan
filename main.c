@@ -2,7 +2,7 @@
  * FLAN main file.
  * Tie together the lexer, parser, type checker, pretty printer.
  *
- * Peter Gammie, peteg@cse.unsw.edu.au
+ * Peter Gammie, peteg42@gmail.com
  * Commenced July 2008.
  *
  */
@@ -134,6 +134,9 @@ int main(int argc, char *argv[]) {
     pp_program(stdout, program);
   }
 
+  /* Switch off buffering on stdout so we get a better observation of laziness. */
+  setvbuf(stdout, (char *)NULL, _IONBF, 0);
+
   if(eval && flange) {
     /* Let FLANGE do the type checking and evaluation. */
     graphics_t *g;
@@ -147,9 +150,6 @@ int main(int argc, char *argv[]) {
       fprintf(stdout, " ** Aborting on type error.\n");
       exit(1);
     }
-
-    /* Switch off buffering on stdout so we get a better observation of laziness. */
-    setvbuf(stdout, (char *)NULL, _IONBF, 0);
 
     /* Execute the program. */
     if(eval) {
