@@ -1,0 +1,187 @@
+-- Martin Erwig: "Diets for Fat Sets" Journal of Functional Programming, 8(6) 1998
+-- http://web.engr.oregonstate.edu/~erwig/papers/Diet_JFP98.pdf
+
+-- "The discrete interval encoding tree for storing subsets of types
+-- having a total order and a predecessor and a successor function."
+
+{-
+signature DIET =
+sig
+  datatype diet = EMPTY | NODE of int * int * diet * diet
+
+  val empty  : diet
+  val insert : int * diet -> diet
+  val delete : int * diet -> diet
+  val member : int * diet -> bool
+end
+
+structure Diet : DIET =
+struct
+
+  datatype diet = EMPTY | NODE of int * int * diet * diet
+  exception EmptyTree
+
+  val empty = EMPTY
+
+  fun splitMax (NODE (x,y,l,EMPTY)) = (x,y,l)
+   |  splitMax (NODE (x,y,l,r)) = let val (u,v,r') = splitMax r
+                                   in (u,v,NODE (x,y,l,r')) end
+
+  fun splitMin (NODE (x,y,EMPTY,r)) = (x,y,r)
+   |  splitMin (NODE (x,y,l,r)) = let val (u,v,l') = splitMin l
+                                   in (u,v,NODE (x,y,l',r)) end
+
+  fun joinLeft (t as NODE (x,y,EMPTY,r)) = t
+   |  joinLeft (NODE (x,y,l,r)) =
+      let val (x',y',l') = splitMax l
+       in if y'+1=x then NODE (x',y,l',r)
+                    else NODE (x,y,l,r)
+      end
+
+  fun joinRight (t as NODE (x,y,l,EMPTY)) = t
+   |  joinRight (NODE (x,y,l,r)) =
+      let val (x',y',r') = splitMin r
+       in if y+1=x' then NODE (x,y',l,r')
+                    else NODE (x,y,l,r)
+      end
+
+  fun insert (z,EMPTY) = NODE (z,z,EMPTY,EMPTY)
+   |  insert (z,t as NODE (x,y,l,r)) =
+      if z<x then
+         if z+1=x then joinLeft (NODE (z,y,l,r))
+                  else NODE (x,y,insert (z,l),r) else
+      if z>y then
+         if z=y+1 then joinRight (NODE (x,z,l,r))
+                  else NODE (x,y,l,insert (z,r))
+      else t (* z in [x,y] *)
+
+  fun merge (l,EMPTY) = l
+   |  merge (EMPTY,r) = r
+   |  merge (l,r)     = let val (x,y,l') = splitMax l
+                         in NODE (x,y,l',r) end
+
+  fun delete (z,EMPTY) = EMPTY
+   |  delete (z,NODE (x,y,l,r)) =
+      if z<x then NODE (x,y,delete (z,l),r) else
+      if z>y then NODE (x,y,l,delete (z,r)) else
+      if z=x then
+         if x=y then merge (l,r)      (* node must be deleted *)
+                else NODE (x+1,y,l,r) (* interval can be simply shrunk *) else
+      if z=y then NODE (x,y-1,l,r)    (* since z<>x => y>x *)
+             else NODE (x,z-1,l,NODE (z+1,y,EMPTY,r)) (* split interval *)
+
+  fun member (x,EMPTY) = false
+   |  member (x,NODE (y,z,l,r)) =
+      if x>=y andalso x<=z then true else
+      if x<y then member (x,l) else
+      (* x>z *)   member (x,r)
+end
+
+(* some examples:
+
+fun build l = List.foldl Diet.insert Diet.empty l;
+
+val l = [6,9,2,13,8,14,10,7,5];
+val d = build l;
+
+*)
+-}
+
+data Diet = EMPTY | NODE Num Num Diet Diet
+
+splitMax :: Diet -> (Num, Num, Diet)
+splitMax n = match n with NODE x y l r -> match r with
+    EMPTY -> (x, y, l)
+  | NODE x1 y1 l1 r1 -> match splitMax r with (u, v, r1) -> (u, v, NODE x y l r1)
+end end end
+;
+
+splitMin :: Diet -> (Num, Num, Diet)
+splitMin n = match n with NODE x y l r ->
+  match l with
+    EMPTY -> (x, y, r)
+  | NODE x1 y1 l1 r1 -> match splitMin l with (u, v, l1) -> (u, v, NODE x y l1 r)
+end end end
+;
+
+joinLeft :: Diet -> Diet
+joinLeft t = match t with NODE x y l r ->
+   match l with
+     EMPTY -> t
+   | NODE x1 y1 l1 r1 -> match splitMax l with (x1, y1, l1) ->
+     if y1 + 1 == x then NODE x1 y l1 r
+                    else NODE x  y l  r
+end end end end
+;
+
+joinRight :: Diet -> Diet
+joinRight t = match t with NODE x y l r ->
+   match r with
+     EMPTY -> t
+   | NODE x1 y1 l1 r1 -> match splitMin r with (x1, y1, r1) ->
+     if y + 1 == x1 then NODE x y1 l r1
+                    else NODE x y l r
+end end end end
+;
+
+insert :: Num -> Diet -> Diet
+insert z t = match t with
+    EMPTY -> NODE z z EMPTY EMPTY
+  | NODE x y l r ->
+      if z < x then
+         if z+1==x then joinLeft (NODE z y l r)
+                   else NODE x y (insert z l) r end else
+      if z>y then
+         if z==y+1 then joinRight (NODE x z l r)
+                   else NODE x y l (insert z r) end
+      else t
+end end end
+;
+
+merge :: Diet -> Diet -> Diet
+merge l r = match l with
+    EMPTY -> r
+  | NODE x1 y1 l1 r1 -> match r with
+      EMPTY -> l
+    | NODE x2 y2 l2 r2 -> match splitMax l with (x, y, l1) -> NODE x y l1 r
+end end end
+;
+
+delete :: Num -> Diet -> Diet
+delete z t = match t with
+    EMPTY -> EMPTY
+  | NODE x y l r ->
+      if z<x then NODE x y (delete z l) r else
+      if z>y then NODE x y l (delete z r) else
+      if z==x then
+         if x==y then merge l r        {- node must be deleted -}
+                 else NODE (x+1) y l r {- interval can be simply shrunk -} end else
+      if z==y then NODE x (y-1) l r    {- since z<>x => y>x -}
+              else NODE x (z-1) l (NODE (z+1) y EMPTY r) {- split interval -}
+end end end end end
+;
+
+member :: Num -> Diet -> Bool
+member x t = match t with
+    EMPTY -> False
+  | NODE y z l r ->
+      if x>=y && x<=z then True else
+      if x<y then member x l else
+      {- x>z -}   member x r
+end end end
+;
+
+-- Example
+
+build :: [Num] -> Diet
+build l = match l with
+    [] -> EMPTY
+  | x : xs -> insert x (build xs)
+end
+;
+
+l :: [Num]
+l = [6,9,2,13,8,14,10,7,5]
+;
+
+main = build l
