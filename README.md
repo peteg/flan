@@ -98,8 +98,8 @@ Suffix "-fail" means the test should be flagged as an error.
 * Minimax ala Bird/Hughes
 * "Seemingly impossible" functional programs ala Escardo
 * DLPP (etc) SAT algorithm
-* [Rosetta Code programming tasks]{http://rosettacode.org/wiki/Category:Programming_Tasks}
-* [Bernie]{http://www.berniepope.id.au/}: interpreter for an imperative language
+* [Rosetta Code programming tasks](http://rosettacode.org/wiki/Category:Programming_Tasks)
+* [Bernie](http://www.berniepope.id.au/): interpreter for an imperative language
 * Functional arrays / priority queues ala Okasaki/Paulson
 
 ## Bugs and infelicities
